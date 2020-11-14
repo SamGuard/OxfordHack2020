@@ -38,12 +38,10 @@ class Room {
 
     getMap(){
         return {
-            response: {
-                map: this.map.map,
-                objects: this.map.objects,
-                player: this.map.player
-                }
-            };
+            map: this.map.map,
+            objects: this.map.objects,
+            player: this.map.player
+        };
     }
 
 
@@ -52,9 +50,9 @@ class Room {
 class Map{
     constructor(name){
         let data = JSON.parse(fs.readFileSync(process.cwd() + `/maps/${name}.json`, {encoding:'utf8', flag:'r'}));
-        this.objects = data.response.objects;
-        this.map = data.response.map;
-        this.player = data.response.player;
+        this.objects = data.objects;
+        this.map = data.map;
+        this.player = data.player;
         this.players = [];
     }
 
