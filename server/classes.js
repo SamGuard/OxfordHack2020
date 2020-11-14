@@ -70,7 +70,7 @@ class Map{
 
         for(let i = 0; i < this.players.length; i++){
             if(this.players[i].id == p.id){
-                this.player[i] = p;
+                this.players[i] = p;
             }
         }
 
