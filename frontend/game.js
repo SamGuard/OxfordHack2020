@@ -14,7 +14,7 @@ class Game {
     // *** GAME SETUP ***
     // ------------------
 
-    constructor(isHost, conn) {
+    constructor(isHost, conn, roomCode) {
         //make a game canvas using jquery in the game canvas container.
         $("#gameMenu").hide();
         $('#gameCanvasContainer').show();// Game canvas goes in here
@@ -22,10 +22,14 @@ class Game {
 
         this.setupCanvas(window.innerWidth/2, window.innerHeight/2);
         this.keys = [];
+
+        this.isHost = isHost;
+        this.conn = conn;
+        this.roomCode = roomCode;
     }
 
     // Function to start the game
-    async start() {
+    async start(map) {
 
         // Start the game tick loop
         this.gameUpdateInterval = setInterval(function () {
@@ -33,18 +37,19 @@ class Game {
         }, 20);
 
         // Imports level data
-        this.level = await $.get("assets/map.json");
+        //this.level = await $.get("assets/map.json");
+        this.level = map;
 
         // Imports the tile set
         this.tilesetImage = new Image();
-        this.tilesetImage.src = "assets/" + this.level.response.map.tileset;
+        this.tilesetImage.src = "assets/" + this.level.map.tileset;
 
         // Import the character image
         // TODO: Change this to a tile set and add character animation
         this.charImage = new Image();
         this.charImage.src = "assets/mydude.png";
 
-        var map = this.level.response.map;
+        var map = this.level.map;
 
         // Initialises the physics engine
         this.engine = Matter.Engine.create();
@@ -53,16 +58,28 @@ class Game {
         // Add a rectangle to the physics engine for every tile in the map
         for (var col = 0; col < map.width; col++) {
             for (var row = 0; row < map.height; row++) {
-                if (map.structure[row][col] != -1) {
-                    Matter.World.add(this.world, [Matter.Bodies.rectangle(col*16,row*16,16,16, { isStatic: true, friction: 0 })]);
+                var tileType = map.structure[row][col];
+                if (tileType != -1) {
+                    if (tileType in this.level.map.customTiles) {
+                        var custom = this.level.map.customTiles[tileType];
+                        if ("boundingBox" in custom) {
+                            console.log(Matter.Vertices.centre(custom.boundingBox));
+                            Matter.World.add(this.world, [Matter.Bodies.fromVertices(col*16 - (16 - Matter.Vertices.centre(custom.boundingBox).x),row*16 - (16 - Matter.Vertices.centre(custom.boundingBox).y), custom.boundingBox, { isStatic: true })]);
+
+                            continue;
+                        }
+                    }
+                    Matter.World.add(this.world, [Matter.Bodies.rectangle(col*16-8,row*16-8,16,16, { isStatic: true })]);
                 }
             }
         }
 
-        var player = this.level.response.player;
+        var player = this.level.player;
 
         // Make player physics object
-        player.obj = Matter.Bodies.rectangle(player.startX*16, player.startY*16, 32, 32, { inertia: Infinity });
+        player.obj = Matter.Bodies.fromVertices(player.startPositions[0].x*16-8, player.startPositions[0].y*16-8, player.boundingBox, {inertia: Infinity});
+
+        //player.obj = Matter.Bodies.rectangle(player.startPositions[0].x*16-8, player.startPositions[0].y*16-8, 32, 32, { inertia: Infinity });
         Matter.World.add(this.world, [player.obj]);
 
         // Add all needed event listeners
@@ -72,6 +89,16 @@ class Game {
 
         // Sets the scale for the canvas (used in the renderer)
         this.scale = (this.ctx.canvas.height) / (map.height * 16);
+
+        var render = Matter.Render.create({
+            canvas: $("#gameCanvas2")[0],
+            engine: this.engine
+        });
+
+        Matter.Render.run(render);
+
+        //other players
+        this.level.players = [];
     }
 
     // Adds any event handlers needed
@@ -80,9 +107,9 @@ class Game {
         $(window).resize(function() {
             conHandler.game.setupCanvas(window.innerWidth/2, window.innerHeight/2);
             // If map has been read in update map scaling
-            if(conHandler.game.level.response != null) {
+            if(conHandler.game.level != null) {
                 console.log("Changed size");
-                conHandler.game.scale = (conHandler.game.ctx.canvas.height) / (conHandler.game.level.response.map.height * 16);
+                conHandler.game.scale = (conHandler.game.ctx.canvas.height) / (conHandler.game.level.map.height * 16);
             }
         });
 
@@ -114,7 +141,7 @@ class Game {
 
     // This runs every game tick
     update(){
-        var player = this.level.response.player.obj;
+        var player = this.level.player.obj;
 
         // Clear the canvas
         this.ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -127,10 +154,13 @@ class Game {
 
         // Render tick
         this.showMap();
+        this.showChars();
+
         this.showChar();
 
         // Physics tick
         Matter.Engine.update(this.engine, 20);
+        this.push({}, this.level.player.obj.position.x, this.level.player.obj.position.y);
     }
 
     // -----------------------
@@ -143,7 +173,6 @@ class Game {
         player.mass = 100;
         player.frictionAir = 0.05;
         player.friction = 0;
-
     }
 
     // Player physics update
@@ -209,13 +238,20 @@ class Game {
 
     // Renders the player icon
     showChar() {
-        var player = this.level.response.player.obj;
-        this.ctx.drawImage(this.charImage, player.position.x-7, player.position.y-8);
+        var player = this.level.player.obj;
+        this.ctx.drawImage(this.charImage, player.position.x, player.position.y);
+    }
+
+    showChars(){
+        for(let i = 0; i < this.level.players.length; i++){
+            let player =  this.level.players[i];
+            this.ctx.drawImage(this.charImage, player.x, player.y);
+        }
     }
 
     // Renders the tiles
     showMap() {
-        var map = this.level.response.map;
+        var map = this.level.map;
 
         for (var col = 0; col < map.width; col++) {
             for (var row = 0; row < map.height; row++) {
@@ -231,5 +267,45 @@ class Game {
         var colNum = Math.floor(tileNum/(this.tilesetImage.width/16));
         var rowNum = tileNum % (this.tilesetImage.width/16);
         this.ctx.drawImage(this.tilesetImage, 16*rowNum, 16*colNum, 16, 16, x*16, y*16, 16, 16);
+    }
+
+    pull(mess){
+        //unpack the objects here
+        let objects = mess.data.objects;
+        let players = mess.data.players;
+
+        for(let i = 0; i < players.length; i++){
+            let found = false;
+            for(let j = 0; j < this.level.players.length; j++){
+                if(players[i].id == conHandler.id){
+                    found = true;
+                    break;
+                } else if(players[i].id == this.level.players[j].id){
+                    this.level.players[j].x = players[i].x;
+                    this.level.players[j].y = players[i].y;
+                    found = true;
+                    break;
+                }
+            }
+
+            if(!found && players[i].id != conHandler.id){
+                let player = {id: players[i].id};
+                player.x = players[i].x;
+                player.y = players[i].y;
+
+                this.level.players.push(player);
+            }
+        }
+
+        //Players contains the positions of every player, but ignore the player with an id == conHandler.id as this is you
+    }
+
+    push(objects, playerX, playerY){
+        this.conn.send(JSON.stringify({
+            purp: "update",
+            data: { roomCode: this.roomCode, objects: objects, player: {id: conHandler.id, x: playerX, y: playerY} },
+            time: Date.now(),
+            id: conHandler.id
+        }));
     }
 }
