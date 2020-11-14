@@ -24,19 +24,21 @@ class Room {
     addPlayer(id) {
         if(this.players < this.MAX_PLAYERS){
             this.clients.push(id);
+            this.map.players.push({id: id.id, x: 0, y: 0});
             this.players++;
         }
     }
 
-    updateGame(obj){
-        return this.map.update(obj);
+    updateGame(obj, p){
+        return this.map.update(obj, p);
     }
 
     getMap(){
         return {
             response: {
                 map: this.map.map,
-                objects: this.map.objects
+                objects: this.map.objects,
+                player: this.map.player
                 }
             };
     }
@@ -49,9 +51,11 @@ class Map{
         let data = JSON.parse(fs.readFileSync(process.cwd() + `/maps/${name}.json`, {encoding:'utf8', flag:'r'}));
         this.objects = data.response.objects;
         this.map = data.response.map;
+        this.player = data.response.player;
+        this.players = [];
     }
 
-    update(d){
+    update(d, p){
         for(let i = 0; i < d.length; i++){
             let o = d[i];
             for(let j = 0; j < this.objects; j++){
@@ -60,7 +64,14 @@ class Map{
                 }
             }
         }
-        return this.objects;
+
+        for(let i = 0; i < this.players.length; i++){
+            if(this.players[i].id == p.id){
+                this.player[i] = p;
+            }
+        }
+
+        return {objects: this.objects, players: this.players};
     }
 }
 

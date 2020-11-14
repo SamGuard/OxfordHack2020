@@ -4,7 +4,7 @@ const UP_KEY = 38;
 const DOWN_KEY = 40;
 
 class Game {
-    constructor(isHost, conn) {
+    constructor(isHost, conn, roomCode) {
         //make a game canvas using jquery in the game canvas container.
         $("#gameMenu").hide();
         $('#gameCanvasContainer').show();// Game canvas goes in here
@@ -12,10 +12,14 @@ class Game {
 
         this.setupCanvas(window.innerWidth/2, window.innerHeight/2);
         this.keys = [];
+
+        this.isHost = isHost;
+        this.conn = conn;
+        this.roomCode = roomCode;
     }
 
     // Function to start the game
-    async start() {
+    async start(map) {
 
         // Start the game tick loop
         this.gameUpdateInterval = setInterval(function () {
@@ -23,7 +27,8 @@ class Game {
         }, 20);
 
         // Imports level data
-        this.level = await $.get("assets/map.json");
+        //this.level = await $.get("assets/map.json");
+        this.level = map;
 
         // Imports the tile set
         this.tilesetImage = new Image();
@@ -128,6 +133,8 @@ class Game {
         // Render tick
         this.showMap();
         this.showChar();
+
+        this.push({}, this.level.response.player.obj.position.x, this.level.response.player.obj.position.x);
     }
 
     // Renders the player icon
@@ -154,5 +161,25 @@ class Game {
         var colNum = Math.floor(tileNum/(this.tilesetImage.width/16));
         var rowNum = tileNum % (this.tilesetImage.width/16);
         this.ctx.drawImage(this.tilesetImage, 16*rowNum, 16*colNum, 16, 16, x*16, y*16, 16, 16);
+    }
+
+
+    pull(mess){
+        //unpack the objects here
+        let objects = mess.data.objects;
+        let players = mess.data.players;
+        console.log(objects);
+        console.log(players);
+
+        //Players contains the positions of every player, but ignore the player with an id == conHandler.id as this is you
+    }
+
+    push(objects, playerX, playerY){
+        this.conn.send(JSON.stringify({
+            purp: "update",
+            data: { roomCode: this.roomCode, objects: objects, player: {id: conHandler.id, x: playerX, y: playerY} },
+            time: Date.now(),
+            id: conHandler.id
+        }));
     }
 }

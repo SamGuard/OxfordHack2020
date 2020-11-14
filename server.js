@@ -161,17 +161,18 @@ function removePlayer(id) {
 function gameUpdate(mess, conn){
     let roomID = mess.data.roomCode;
     let data = mess.data.objects;
+    let player = mess.data.player;
 
     let room = findRoomByCode(roomID);
-    let newObjects = rooms[room].updateGame(data);
+    let dataOut = rooms[room].updateGame(data, player);
     let clients = rooms[room].getClients();
     for(let i = 0; i < clients.length; i++){
-        let conn = findPlayerByID(clients[i]);
-        connections[conn].sendUTF(JSON.stringify({
+        let connIndex = findPlayerByID(clients[i]);
+        connections[connIndex].sendUTF(JSON.stringify({
             purp: "update",
-            data: {objects: newObjects},
+            data: {objects: dataOut.objects, players: dataOut.players},
             time: Date.now(),
-            id: connections[conn].id.id
+            id: connections[connIndex].id.id
         }));   
     }
 }
