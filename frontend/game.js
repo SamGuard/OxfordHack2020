@@ -168,8 +168,6 @@ class Game {
         //unpack the objects here
         let objects = mess.data.objects;
         let players = mess.data.players;
-        console.log(objects);
-        console.log(players);
 
         //Players contains the positions of every player, but ignore the player with an id == conHandler.id as this is you
     }

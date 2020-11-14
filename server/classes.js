@@ -12,9 +12,12 @@ class Room {
     constructor(roomCode, hostID) {
         this.MAX_PLAYERS = 4
         this.code = roomCode;
-        this.clients = [hostID];
-        this.players = 1;
+        this.clients = [];
+        this.players = 0;
+        
         this.map = new Map("map1");
+
+        this.addPlayer(hostID);
     }
 
     getClients(){
