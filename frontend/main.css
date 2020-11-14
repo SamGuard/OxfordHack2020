@@ -1,0 +1,129 @@
+.GridContainer {
+  display: inline-grid;
+  grid-template-columns: auto auto auto;
+}
+
+.MovementButtons{
+    text-align: center;
+    margin: auto;
+    width: 60%;
+    border: 3px solid #73AD21;
+    padding: 10px;
+}
+
+body {
+  font-family: 'Exo 2';
+  background-color: #F3F5F6;
+}
+
+.bigtitle {
+  font-weight: bold;
+  font-size: 65px;
+  color: #2C3E50;
+  text-transform: uppercase;
+  text-align: center;
+  margin-top: 1%;
+} 
+
+.title {
+  font-weight: bold;
+  font-size: 50px;
+  color: #2C3E50;
+  text-transform: uppercase;
+  text-align: center;
+  margin-top: 1%;
+}
+
+.subtitle {
+  font-weight: 400;
+  font-size: 30px;
+  color: #2C3E50;
+  text-transform: uppercase;
+  text-align: center;
+  margin: 10px;
+}
+#mainBlock, #gameEndScreen, #helpButton, #gameCanvasContainer, #gameReadyButton, #gameControlsContainer {
+  text-align: center;
+}
+
+#createGamePage {
+  text-align: center;
+}
+
+#helpScreen {
+  padding: 0 30px;
+}
+
+.draw-border {
+  box-shadow: inset 0 0 0 4px #2C3E50;
+  color: #2C3E50;
+  transition: color 0.25s 0.0833333333s;
+  position: relative;
+}
+.draw-border::before, .draw-border::after {
+  border: 0 solid transparent;
+  box-sizing: border-box;
+  content: "";
+  pointer-events: none;
+  position: absolute;
+  width: 0;
+  height: 0;
+  bottom: 0;
+  right: 0;
+}
+.draw-border::before {
+  border-bottom-width: 4px;
+  border-left-width: 4px;
+}
+.draw-border::after {
+  border-top-width: 4px;
+  border-right-width: 4px;
+}
+.draw-border:hover {
+  color: #2DCC6F;
+}
+.draw-border:hover::before, .draw-border:hover::after {
+  border-color: #3597DA;
+  transition: border-color 0s, width 0.15s, height 0.15s;
+  width: 100%;
+  height: 100%;
+}
+.draw-border:hover::before {
+  transition-delay: 0s, 0s, 0.15s;
+}
+.draw-border:hover::after {
+  transition-delay: 0s, 0.15s, 0s;
+}
+
+.btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  line-height: 1.5;
+  font: 700 1.2rem "Exo 2";
+  text-transform: uppercase;
+  padding: 1em 2em;
+  letter-spacing: 0.05rem;
+  width: 25%;
+  margin: 10px;
+}
+.btn:focus {
+  outline: 2px dotted #2C3E50;
+}
+
+input {
+  border: none;
+  padding: 0;
+  width: 9ch;
+  background: repeating-linear-gradient(90deg, dimgrey 0, dimgrey 1ch, transparent 0, transparent 1.5ch) 0 100%/10ch 2px no-repeat;
+  font: 5ch droid sans mono, consolas, monospace;
+  letter-spacing: 0.5ch;
+  color: #2C3E50;
+  margin-bottom: 15px;
+  text-transform: uppercase;
+
+}
+input:focus {
+  outline: none;
+  color: dodgerblue;
+}
