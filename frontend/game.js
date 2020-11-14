@@ -3,7 +3,17 @@ const RIGHT_KEY = 39;
 const UP_KEY = 38;
 const DOWN_KEY = 40;
 
+const PLAYER_WIDTH = 32;
+const PLAYER_HEIGHT = 32;
+
+const TILE_SIZE = 16;
+
 class Game {
+
+    // ------------------
+    // *** GAME SETUP ***
+    // ------------------
+
     constructor(isHost, conn) {
         //make a game canvas using jquery in the game canvas container.
         $("#gameMenu").hide();
@@ -44,7 +54,7 @@ class Game {
         for (var col = 0; col < map.width; col++) {
             for (var row = 0; row < map.height; row++) {
                 if (map.structure[row][col] != -1) {
-                    Matter.World.add(this.world, [Matter.Bodies.rectangle(col*16,row*16,16,16, { isStatic: true })]);
+                    Matter.World.add(this.world, [Matter.Bodies.rectangle(col*16,row*16,16,16, { isStatic: true, friction: 0 })]);
                 }
             }
         }
@@ -57,6 +67,8 @@ class Game {
 
         // Add all needed event listeners
         this.setupEvents();
+
+        this.setupPhysics()
 
         // Sets the scale for the canvas (used in the renderer)
         this.scale = (this.ctx.canvas.height) / (map.height * 16);
@@ -96,6 +108,10 @@ class Game {
         this.ctx.imageSmoothingEnabled= false;
     }
 
+    // ------------------
+    // *** GAME TICKS ***
+    // ------------------
+
     // This runs every game tick
     update(){
         var player = this.level.response.player.obj;
@@ -105,30 +121,91 @@ class Game {
         this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
 
         // Transform the game to fill the canvas vertically
-        this.ctx.setTransform(this.scale, 0, 0, this.scale, 0.5*this.ctx.canvas.width - this.scale*player.position.x, 0);
+        this.ctx.setTransform(this.scale, 0, 0, this.scale, 0.5*this.ctx.canvas.width - this.scale * player.position.x, 0);
 
-        // Apply player movement
-        // TODO: move this into a function
-        if(conHandler.game.keys[LEFT_KEY]) {
-            Matter.Body.setVelocity(player, {x: -3, y: 0})
-        }            
-        if(conHandler.game.keys[RIGHT_KEY]) {
-            Matter.Body.setVelocity(player, {x: 3, y: 0})
-        }            
-        if(conHandler.game.keys[UP_KEY]) {
-            Matter.Body.setVelocity(player, {x: 0, y: -3})
-        }            
-        if(conHandler.game.keys[DOWN_KEY]) {
-            Matter.Body.setVelocity(player, {x: 0, y: 3})
-        }
-
-        // Physics tick
-        Matter.Engine.update(this.engine, 20);
+        this.updatePlayerPhysics();
 
         // Render tick
         this.showMap();
         this.showChar();
+
+        // Physics tick
+        Matter.Engine.update(this.engine, 20);
     }
+
+    // -----------------------
+    // *** PHYSICS STUFF ***
+    // -----------------------
+
+    // Sets physics perameters for the player
+    setupPhysics() {
+        var player = this.level.response.player.obj;
+        player.mass = 100;
+        player.frictionAir = 0.05;
+        player.friction = 0;
+
+    }
+
+    // Player physics update
+    updatePlayerPhysics() {
+
+        const JUMP_SPEED = 12;
+        const LEFT_RIGHT_SPEED = 2.5;
+        const DROP_FORCE = 1;
+
+        var player = this.level.response.player.obj;
+
+        if(this.isOnFloor()) {
+            var velocity = {x: player.velocity.x, y: player.velocity.y}
+
+            if(this.keys[UP_KEY]) {
+                velocity.y = (velocity.y - JUMP_SPEED) /2;
+            }
+            if(this.keys[LEFT_KEY] && this.keys[RIGHT_KEY]) {
+                velocity.x = velocity.x / 2;
+            } else if(this.keys[RIGHT_KEY]) {
+                velocity.x = (velocity.x + LEFT_RIGHT_SPEED) /2;
+            } else if(this.keys[LEFT_KEY]) {
+                velocity.x = (velocity.x - LEFT_RIGHT_SPEED) / 2;
+            }
+            Matter.Body.setVelocity(player, velocity)
+        } else {
+            var velocity = player.velocity;
+            if(this.keys[RIGHT_KEY]) {
+                velocity.x = LEFT_RIGHT_SPEED;
+            }
+
+            if(this.keys[LEFT_KEY]) {
+                velocity.x = -LEFT_RIGHT_SPEED;
+            }
+            Matter.Body.setVelocity(player, velocity)
+        }
+    }
+
+    // Is player currently falling?
+    isOnFloor() {
+        var player = this.level.response.player.obj;
+
+        var x = Math.round(player.position.x / TILE_SIZE);
+        var y = Math.ceil((player.position.y + PLAYER_HEIGHT) / TILE_SIZE );
+        var y1 = Math.ceil((player.position.y + PLAYER_HEIGHT / 2) / TILE_SIZE );
+
+        var map = this.level.response.map;
+
+        if( player.velocity.y > 0 ) {
+            return false;
+        }
+
+        if( x < 0 || x >= map.width || y1 < 0 || y >= map.height || (map.structure[y][x] === -1 && map.structure[y1][x] === -1)) {
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    // -----------------------
+    // *** RENDERING STUFF ***
+    // -----------------------
 
     // Renders the player icon
     showChar() {
