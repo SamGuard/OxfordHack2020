@@ -71,25 +71,12 @@ class ConnectionHandler {
         this.gameRunning = true;
 
         console.log("Game running, isHost: " + this.isHost);
-        if (this.isHost) {
-            this.game = new Game(this.isHost, this.socket);
-            gameUpdateInterval = setInterval(function () {
-                conHandler.game.update();
-            }, 16);
-        } else {
-            this.game = new Game(this.isHost, this.socket);
-            gameUpdateInterval = setInterval(function () {
-                conHandler.game.update();
-            }, 16);
-        }
-
+        this.game = new Game(this.isHost, this.socket);
+        this.game.start();
     }
-
-
 };
 
 let conHandler = new ConnectionHandler();
-let gameUpdateInterval = null;
 let audio = new Audio();
 
 conHandler.socket.onopen = function (e) {
@@ -161,6 +148,10 @@ $(document).ready(function () {
     $('#joinGameButton').click(function () {
         conHandler.roomCode = $('#codeInput').val().toLowerCase();
         conHandler.joinRoom();
+    });
+
+    $('#startGameButton').click(function () {
+        conHandler.startGame();
     });
 
     $('#createGameButton').click(function () {

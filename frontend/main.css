@@ -46,7 +46,7 @@ body {
   text-align: center;
 }
 
-#createGamePage {
+#createGamePage, #gameCanvas {
   text-align: center;
 }
 
