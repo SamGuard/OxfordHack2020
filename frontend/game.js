@@ -95,7 +95,7 @@ class Game {
         $(window).resize(function() {
             conHandler.game.setupCanvas(window.innerWidth/2, window.innerHeight/2);
             // If map has been read in update map scaling
-            if(conHandler.game.level.response != null) {
+            if(conHandler.game.level != null) {
                 console.log("Changed size");
                 conHandler.game.scale = (conHandler.game.ctx.canvas.height) / (conHandler.game.level.map.height * 16);
             }
