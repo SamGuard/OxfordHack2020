@@ -129,12 +129,12 @@ function startRoom(mess, conn){
     let roomID = findRoomByCode(mess.data.roomCode);
     if(roomID != -1){
         let clients = rooms[roomID].getClients();
-
+        let mapData = rooms[roomID].getMap();
         for(let i = 0; i < clients.length; i++){
             let conn = findPlayerByID(clients[i]);
             connections[conn].sendUTF(JSON.stringify({
                 purp: "start",
-                data: {},
+                data: {map: mapData},
                 time: Date.now(),
                 id: connections[conn].id.id
             }));
@@ -158,6 +158,24 @@ function removePlayer(id) {
     }
 }
 
+function gameUpdate(mess, conn){
+    let roomID = mess.data.roomCode;
+    let data = mess.data.objects;
+
+    let room = findRoomByCode(roomID);
+    let newObjects = rooms[room].updateGame(data);
+    let clients = rooms[room].getClients();
+    for(let i = 0; i < clients.length; i++){
+        let conn = findPlayerByID(clients[i]);
+        connections[conn].sendUTF(JSON.stringify({
+            purp: "update",
+            data: {objects: newObjects},
+            time: Date.now(),
+            id: connections[conn].id.id
+        }));   
+    }
+}
+
 function handleMessage(mess, conn) {
     mess = JSON.parse(mess);
     if (mess.purp == "setid") {
@@ -170,6 +188,8 @@ function handleMessage(mess, conn) {
         startRoom(mess, conn);
     } else if (mess.purp == "destroyroom") {
         destroyRoom(mess, conn);
+    } else if(mess.purp == "update"){
+        gameUpdate(mess, conn);
     } else {
         conn.sendUTF(JSON.stringify({
             purp: "error",

@@ -1,3 +1,5 @@
+fs = require('fs');
+
 class ID {
     constructor(ip, id) {
         this.ip = ip;
@@ -26,12 +28,39 @@ class Room {
         }
     }
 
+    updateGame(obj){
+        return this.map.update(obj);
+    }
+
+    getMap(){
+        return {
+            response: {
+                map: this.map.map,
+                objects: this.map.objects
+                }
+            };
+    }
+
 
 }
 
 class Map{
     constructor(name){
+        let data = JSON.parse(fs.readFileSync(process.cwd() + `/maps/${name}.json`, {encoding:'utf8', flag:'r'}));
+        this.objects = data.response.objects;
+        this.map = data.response.map;
+    }
 
+    update(d){
+        for(let i = 0; i < d.length; i++){
+            let o = d[i];
+            for(let j = 0; j < this.objects; j++){
+                if(o.id == this.objects[i].id){
+                    this.objects[i] = o;
+                }
+            }
+        }
+        return this.objects;
     }
 }
 

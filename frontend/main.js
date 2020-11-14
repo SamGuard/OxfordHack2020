@@ -121,7 +121,9 @@ conHandler.socket.onmessage = function (event) {
         return;
     }
 
-    if (data.purp == "createroom") {
+    if(data.purp == "update"){
+        console.log(data.data);
+    } else if (data.purp == "createroom") {
         conHandler.roomCode = data.data.roomCode;
         console.log(conHandler.roomCode);
         $('#createGamePin').html(`<b>${conHandler.roomCode}</b><br>`);
