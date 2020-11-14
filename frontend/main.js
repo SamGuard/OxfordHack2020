@@ -132,7 +132,6 @@ conHandler.socket.onmessage = function (event) {
 
 };
 
-
 conHandler.socket.onclose = function (event) {
     if (event.wasClean) {
         console.log(`[close] Connection closed cleanly, code=${event.code} reason=${event.reason}`);
@@ -203,5 +202,4 @@ $(document).ready(function () {
         $('#helpScreen').hide();
         $('#createGamePage').hide();
     });
-
 });
