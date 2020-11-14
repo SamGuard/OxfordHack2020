@@ -3,6 +3,7 @@ const webSocketServer = require("websocket").server;
 const app = require("./server/app");//Controls the http routing
 const shortID = require("short-id");//Used to generate the room codes
 const { isUndefined } = require('util');
+const {ID, Room, Map} = require('./server/classes.js')
 
 
 const port = process.env.PORT || 3000;//Use port 3000 unless process.env.PORT is set as this variable is set when deployed to heroku
@@ -37,44 +38,7 @@ error - if something has gone wrong
 
 //ID stores the ID of each user to connect, this is so people using the same IP
 //Can play 
-class ID {
-    constructor(ip, id) {
-        this.ip = ip;
-        this.id = id;
-    }
-};
 
-//Stores information about the 2 players
-class Room {
-    constructor(roomCode, hostID) {
-        this.MAX_PLAYERS = 4
-        this.code = roomCode;
-        this.clients = [hostID];
-        this.players = 1;
-        
-    }
-
-    startGame(){
-        for(let i = 0; i < this.players; i++){
-            let conn = findPlayerByID(this.clients[i]);
-            connections[conn].sendUTF(JSON.stringify({
-                purp: "start",
-                data: {},
-                time: Date.now(),
-                id: connections[conn].id.id
-            }));
-        }
-    }
-
-    addPlayer(id) {
-        if(this.players < this.MAX_PLAYERS){
-            this.clients.push(id);
-            this.players++;
-        }
-    }
-
-
-}
 
 rooms = [];
 
@@ -164,7 +128,17 @@ function joinRoom(mess, conn) {
 function startRoom(mess, conn){
     let roomID = findRoomByCode(mess.data.roomCode);
     if(roomID != -1){
-        rooms[roomID].startGame();
+        let clients = rooms[roomID].getClients();
+        let mapData = rooms[roomID].getMap();
+        for(let i = 0; i < clients.length; i++){
+            let conn = findPlayerByID(clients[i]);
+            connections[conn].sendUTF(JSON.stringify({
+                purp: "start",
+                data: {map: mapData},
+                time: Date.now(),
+                id: connections[conn].id.id
+            }));
+        }
     }
 }
 
@@ -184,6 +158,24 @@ function removePlayer(id) {
     }
 }
 
+function gameUpdate(mess, conn){
+    let roomID = mess.data.roomCode;
+    let data = mess.data.objects;
+
+    let room = findRoomByCode(roomID);
+    let newObjects = rooms[room].updateGame(data);
+    let clients = rooms[room].getClients();
+    for(let i = 0; i < clients.length; i++){
+        let conn = findPlayerByID(clients[i]);
+        connections[conn].sendUTF(JSON.stringify({
+            purp: "update",
+            data: {objects: newObjects},
+            time: Date.now(),
+            id: connections[conn].id.id
+        }));   
+    }
+}
+
 function handleMessage(mess, conn) {
     mess = JSON.parse(mess);
     if (mess.purp == "setid") {
@@ -196,6 +188,8 @@ function handleMessage(mess, conn) {
         startRoom(mess, conn);
     } else if (mess.purp == "destroyroom") {
         destroyRoom(mess, conn);
+    } else if(mess.purp == "update"){
+        gameUpdate(mess, conn);
     } else {
         conn.sendUTF(JSON.stringify({
             purp: "error",
