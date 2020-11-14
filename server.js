@@ -156,6 +156,19 @@ function removePlayer(id) {
     if (playerIndex != -1) {
         connections.splice(playerIndex, 1);
     }
+
+    for(let i = 0; i < rooms.length; i++){
+        for(let j = 0; j < rooms[i].clients.length; j++){
+            if(compareID(id, rooms[i].clients[j]) == true){
+                rooms[i].clients.splice(j, 1);
+                if(rooms[i].length == 0){
+                    rooms.splice(i, 1);
+                }
+                return;
+            }
+        }
+    }
+
 }
 
 function gameUpdate(mess, conn){
