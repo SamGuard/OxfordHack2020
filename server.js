@@ -47,17 +47,29 @@ class ID {
 //Stores information about the 2 players
 class Room {
     constructor(roomCode, hostID) {
+        this.MAX_PLAYERS = 4
         this.code = roomCode;
-        this.hostID = hostID;
-        this.clientID = null;
+        this.clients = [hostID];
+        this.players = 1;
+        
+    }
+
+    startGame(){
+        for(let i = 0; i < this.players; i++){
+            let conn = findPlayerByID(this.clients[i]);
+            connections[conn].sendUTF(JSON.stringify({
+                purp: "start",
+                data: {},
+                time: Date.now(),
+                id: connections[conn].id.id
+            }));
+        }
     }
 
     addPlayer(id) {
-        if (this.clientID == null) {
-            this.clientID = id;
-            return 1;
-        } else {
-            return -1;
+        if(this.players < this.MAX_PLAYERS){
+            this.clients.push(id);
+            this.players++;
         }
     }
 
@@ -91,15 +103,6 @@ function compareID(id1, id2) {
 function findRoomByCode(roomCode) {
     for (let i = 0; i < rooms.length; i++) {
         if (rooms[i].code == roomCode) {
-            return i;
-        }
-    }
-    return -1;
-}
-
-function findRoomByPlayerID(id) {
-    for (let i = 0; i < rooms.length; i++) {
-        if (compareID(rooms[i].hostID, id) || (rooms[i].clientID != undefined && compareID(rooms[i].clientID, id))) {
             return i;
         }
     }
@@ -148,18 +151,6 @@ function joinRoom(mess, conn) {
             time: Date.now(),
             id: conn.id.id
         }));
-
-        let playerIndex = findPlayerByID(rooms[roomIndex].hostID);
-        if (playerIndex != -1) {
-            connections[playerIndex].sendUTF(JSON.stringify({
-                purp: "start",
-                data: {},
-                time: Date.now(),
-                id: connections[playerIndex].id.id
-            }));
-        } else {
-            console.log("Error: could not find other player");
-        }
     } else {
         conn.sendUTF(JSON.stringify({
             purp: "joinroom",
@@ -170,59 +161,22 @@ function joinRoom(mess, conn) {
     }
 }
 
-function passMessage(mess, conn) {
-    let sourcePlayerID = new ID(conn.remoteAddress, mess.id);
-    let roomIndex = findRoomByPlayerID(sourcePlayerID);
-    let destPlayerID = null;
-    //Finding the ID of the other player in the room
-    if (roomIndex == -1) {
-        conn.sendUTF(JSON.stringify({
-            purp: "error",
-            data: { error: "Could not find room" },
-            time: Date.now(),
-            id: mess.id
-        }));
-        return;
+function startRoom(mess, conn){
+    let roomID = findRoomByCode(mess.data.roomCode);
+    if(roomID != -1){
+        rooms[roomID].startGame();
     }
-
-    if (compareID(rooms[roomIndex].hostID, sourcePlayerID) == true) {
-        destPlayerID = rooms[roomIndex].clientID;
-    } else {
-        destPlayerID = rooms[roomIndex].hostID;
-    }
-
-    let connIndex = findPlayerByID(destPlayerID);
-    if (connIndex == -1) {
-        conn.sendUTF(JSON.stringify({
-            purp: "error",
-            data: { error: "Could not find other player" },
-            time: Date.now(),
-            id: mess.id
-        }));
-        return;
-    }
-    connections[connIndex].sendUTF(JSON.stringify({
-        purp: "pass",
-        data: mess.data,
-        time: mess.time,
-        id: destPlayerID.id
-    }));
 }
 
 function destroyRoom(mess, conn) {
-    let playerID = new ID(conn.remoteAddress, mess.id);
-    let roomIndex = findRoomByPlayerID(playerID);
+    let roomID = new ID(conn.remoteAddress, mess.roomID);
+    let roomIndex = findRoomByCode(roomID);
     if (roomIndex != -1) {
         rooms.splice(roomIndex, 1);
     }
 }
 
 function removePlayer(id) {
-    let roomIndex = findRoomByPlayerID(id);
-    if (roomIndex != -1) {
-        rooms.splice(roomIndex, 1);
-    }
-
     let playerIndex = findPlayerByID(id);
 
     if (playerIndex != -1) {
@@ -238,8 +192,8 @@ function handleMessage(mess, conn) {
         createRoom(mess, conn);
     } else if (mess.purp == "joinroom") {
         joinRoom(mess, conn);
-    } else if (mess.purp == "pass") {
-        passMessage(mess, conn);
+    } else if(mess.purp == "startroom"){
+        startRoom(mess, conn);
     } else if (mess.purp == "destroyroom") {
         destroyRoom(mess, conn);
     } else {

@@ -1,8 +1,8 @@
 class Game {
     constructor(isHost, conn) {
         //make a game canvas using jquery in the game canvas container.
-        $("#gameMenu").hide();
-        $('#gameCanvasContainer').show();// Game canvas goes in here
+        $("#gameMenu").show();
+        $('#gameCanvasContainer').hide();// Game canvas goes in here
         $('#gameEndScreen').hide();
     }
 
