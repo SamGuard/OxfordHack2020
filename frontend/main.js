@@ -10,7 +10,7 @@ function makeid(length) {
 
 class ConnectionHandler {
     constructor() {
-        this.isHost = false;
+        this.isHost = true;
         this.gameRunning = false;
         this.roomCode = "";
         this.game;
@@ -43,7 +43,7 @@ class ConnectionHandler {
     destroyRoom() {
         let data = JSON.stringify({
             purp: "destroyroom",
-            data: {},
+            data: { roomID: this.roomCode },
             time: Date.now(),
             id: this.id
         });
@@ -60,7 +60,15 @@ class ConnectionHandler {
         this.socket.send(data);
     }
 
-
+    causeStartGame(){
+        let data = JSON.stringify({
+            purp: "startroom",
+            data: { roomCode: this.roomCode },
+            time: Date.now(),
+            id: this.id
+        });
+        this.socket.send(data);
+    }
 
     startGame() {
         console.log("Start game");
@@ -123,11 +131,9 @@ conHandler.socket.onmessage = function (event) {
         } else {
             conHandler.roomCode = data.data.roomCode;
             conHandler.isHost = false;
-            conHandler.startGame();
         }
 
     } else if (data.purp == "start") {
-        conHandler.isHost = true;
         conHandler.startGame();
     } else if (data.purp == "pass") {
         conHandler.game.handleMess(data);
@@ -172,8 +178,15 @@ $(document).ready(function () {
     });
 
     $('#createBackButton').click(function () {
-
         conHandler.destroyRoom();
+        $('#homePage').show();
+        $('#gamePage').hide();
+        $('#helpScreen').hide();
+        $('#createGamePage').hide();
+    });
+
+    $('#createStartButton').click(function () {
+        conHandler.causeStartGame();
         $('#homePage').show();
         $('#gamePage').hide();
         $('#helpScreen').hide();
