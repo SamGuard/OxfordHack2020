@@ -17,16 +17,13 @@
             "width": 20,
             "height": 10
         },
+        "player": {
+            "startX": 4,
+            "startY": 3
+        },
         "objects": [
             {
-                "id": 1,
-                "type": "Player",
-                "startX": 0,
-                "startY": 0
-            },
-            {
-                "id": 2,
-                "type": "Player",
+                "type": "Rock",
                 "startX": 0,
                 "startY": 0
             }

@@ -70,7 +70,7 @@ class ConnectionHandler {
         this.socket.send(data);
     }
 
-    startGame() {
+    startGame(map) {
         console.log("Start game");
         $('#createGamePage').hide();
         $('#homePage').hide();
@@ -79,8 +79,8 @@ class ConnectionHandler {
         this.gameRunning = true;
 
         console.log("Game running, isHost: " + this.isHost);
-        this.game = new Game(this.isHost, this.socket);
-        this.game.start();
+        this.game = new Game(this.isHost, this.socket, this.roomCode);
+        this.game.start(map);
     }
 };
 
@@ -109,7 +109,7 @@ conHandler.socket.onmessage = function (event) {
     }
 
     if(data.purp == "update"){
-        console.log(data.data);
+        conHandler.game.pull(data);
     } else if (data.purp == "createroom") {
         conHandler.roomCode = data.data.roomCode;
         console.log(conHandler.roomCode);
@@ -121,11 +121,8 @@ conHandler.socket.onmessage = function (event) {
             conHandler.roomCode = data.data.roomCode;
             conHandler.isHost = false;
         }
-
     } else if (data.purp == "start") {
-        conHandler.startGame();
-    } else if (data.purp == "pass") {
-        conHandler.game.handleMess(data);
+        conHandler.startGame(data.data.map);
     } else {
         console.log("Error purpose not recognise");
     }

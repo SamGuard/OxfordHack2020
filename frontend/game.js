@@ -4,7 +4,7 @@ const UP_KEY = 38;
 const DOWN_KEY = 40;
 
 class Game {
-    constructor(isHost, conn) {
+    constructor(isHost, conn, roomCode) {
         //make a game canvas using jquery in the game canvas container.
         $("#gameMenu").hide();
         $('#gameCanvasContainer').show();// Game canvas goes in here
@@ -12,10 +12,14 @@ class Game {
 
         this.setupCanvas(window.innerWidth/2, window.innerHeight/2);
         this.keys = [];
+
+        this.isHost = isHost;
+        this.conn = conn;
+        this.roomCode = roomCode;
     }
 
     // Function to start the game
-    async start() {
+    async start(map) {
 
         // Start the game tick loop
         this.gameUpdateInterval = setInterval(function () {
@@ -23,7 +27,8 @@ class Game {
         }, 20);
 
         // Imports level data
-        this.level = await $.get("assets/map.json");
+        //this.level = await $.get("assets/map.json");
+        this.level = map;
 
         // Imports the tile set
         this.tilesetImage = new Image();
@@ -80,6 +85,8 @@ class Game {
 
         Matter.Render.run(render);
 
+        //other players
+        this.level.players = [];
     }
 
     // Adds any event handlers needed
@@ -147,13 +154,24 @@ class Game {
 
         // Render tick
         this.showMap();
+        this.showChars();
+
         this.showChar();
+
+        this.push({}, this.level.player.obj.position.x, this.level.player.obj.position.y);
     }
 
     // Renders the player icon
     showChar() {
         var player = this.level.player.obj;
         this.ctx.drawImage(this.charImage, player.position.x, player.position.y);
+    }
+
+    showChars(){
+        for(let i = 0; i < this.level.players.length; i++){
+            let player =  this.level.players[i];
+            this.ctx.drawImage(this.charImage, player.x, player.y);
+        }
     }
 
     // Renders the tiles
@@ -174,5 +192,45 @@ class Game {
         var colNum = Math.floor(tileNum/(this.tilesetImage.width/16));
         var rowNum = tileNum % (this.tilesetImage.width/16);
         this.ctx.drawImage(this.tilesetImage, 16*rowNum, 16*colNum, 16, 16, x*16, y*16, 16, 16);
+    }
+
+    pull(mess){
+        //unpack the objects here
+        let objects = mess.data.objects;
+        let players = mess.data.players;
+
+        for(let i = 0; i < players.length; i++){
+            let found = false;
+            for(let j = 0; j < this.level.players.length; j++){
+                if(players[i].id == conHandler.id){
+                    found = true;
+                    break;
+                } else if(players[i].id == this.level.players[j].id){
+                    this.level.players[j].x = players[i].x;
+                    this.level.players[j].y = players[i].y;
+                    found = true;
+                    break;
+                }
+            }
+
+            if(!found && players[i].id != conHandler.id){
+                let player = {id: players[i].id};
+                player.x = players[i].x;
+                player.y = players[i].y;
+
+                this.level.players.push(player);
+            }
+        }
+
+        //Players contains the positions of every player, but ignore the player with an id == conHandler.id as this is you
+    }
+
+    push(objects, playerX, playerY){
+        this.conn.send(JSON.stringify({
+            purp: "update",
+            data: { roomCode: this.roomCode, objects: objects, player: {id: conHandler.id, x: playerX, y: playerY} },
+            time: Date.now(),
+            id: conHandler.id
+        }));
     }
 }
