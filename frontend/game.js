@@ -14,24 +14,33 @@ class Game {
         this.keys = [];
     }
 
+    // Function to start the game
     async start() {
 
+        // Start the game tick loop
         this.gameUpdateInterval = setInterval(function () {
             conHandler.game.update();
         }, 20);
 
+        // Imports level data
         this.level = await $.get("assets/map.json");
 
-        this.image = new Image();
-        this.image.src = "assets/" + this.level.response.map.tileset;
+        // Imports the tile set
+        this.tilesetImage = new Image();
+        this.tilesetImage.src = "assets/" + this.level.response.map.tileset;
 
+        // Import the character image
+        // TODO: Change this to a tile set and add character animation
         this.charImage = new Image();
         this.charImage.src = "assets/mydude.png";
 
         var map = this.level.response.map;
+
+        // Initialises the physics engine
         this.engine = Matter.Engine.create();
         this.world = this.engine.world;
 
+        // Add a rectangle to the physics engine for every tile in the map
         for (var col = 0; col < map.width; col++) {
             for (var row = 0; row < map.height; row++) {
                 if (map.structure[row][col] != -1) {
@@ -41,31 +50,23 @@ class Game {
         }
 
         var player = this.level.response.player;
+
+        // Make player physics object
         player.obj = Matter.Bodies.rectangle(player.startX*16, player.startY*16, 32, 32, { inertia: Infinity });
         Matter.World.add(this.world, [player.obj]);
 
-        // var render = Matter.Render.create({
-        //     canvas: this.ctx.canvas,
-        //     engine: this.engine
-        // });
-
-        // Matter.Render.lookAt(render, {
-        //     min: {x: -7, y: -8},
-        //     max: {x: render.canvas.width, y: render.canvas.height}
-        // });
-
-        // Matter.Render.run(render);
-
+        // Add all needed event listeners
         this.setupEvents();
 
+        // Sets the scale for the canvas (used in the renderer)
         this.scale = (this.ctx.canvas.height) / (map.height * 16);
-
     }
 
+    // Adds any event handlers needed
     setupEvents() {
+        // On a resize change size of canvas and redo scale
         $(window).resize(function() {
             conHandler.game.setupCanvas(window.innerWidth/2, window.innerHeight/2);
-
             // If map has been read in update map scaling
             if(conHandler.game.level.response != null) {
                 console.log("Changed size");
@@ -73,6 +74,7 @@ class Game {
             }
         });
 
+        // Store the current state of the keys in a dict so they can always be looked up
         $(window).keydown(function(e) {
             conHandler.game.keys[e.keyCode] = true;
         });
@@ -82,6 +84,7 @@ class Game {
         });
     }
 
+    // Sets all the needed properties of the canvas
     async setupCanvas(width, height) {
         var canvas = $('#gameCanvas')[0];
         this.ctx = canvas.getContext("2d");
@@ -93,13 +96,19 @@ class Game {
         this.ctx.imageSmoothingEnabled= false;
     }
 
+    // This runs every game tick
     update(){
         var player = this.level.response.player.obj;
 
+        // Clear the canvas
         this.ctx.setTransform(1, 0, 0, 1, 0, 0);
         this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
+
+        // Transform the game to fill the canvas vertically
         this.ctx.setTransform(this.scale, 0, 0, this.scale, 0.5*this.ctx.canvas.width - this.scale*player.position.x, 0);
 
+        // Apply player movement
+        // TODO: move this into a function
         if(conHandler.game.keys[LEFT_KEY]) {
             Matter.Body.setVelocity(player, {x: -3, y: 0})
         }            
@@ -121,26 +130,29 @@ class Game {
         this.showChar();
     }
 
+    // Renders the player icon
     showChar() {
         var player = this.level.response.player.obj;
         this.ctx.drawImage(this.charImage, player.position.x-7, player.position.y-8);
     }
 
+    // Renders the tiles
     showMap() {
         var map = this.level.response.map;
 
         for (var col = 0; col < map.width; col++) {
             for (var row = 0; row < map.height; row++) {
-                if (map.structure[row][col] != -1) {
+                if (map.structure[row][col] !== -1) {
                     this.drawTile(map.structure[row][col], col, row);
                 }
             }
         }
     }
 
+    // Draws a tile from the tile set in a position
     drawTile(tileNum, x, y) {
-        var colNum = Math.floor(tileNum/(this.image.width/16));
-        var rowNum = tileNum % (this.image.width/16);
-        this.ctx.drawImage(this.image, 16*rowNum, 16*colNum, 16, 16, x*16, y*16, 16, 16);
+        var colNum = Math.floor(tileNum/(this.tilesetImage.width/16));
+        var rowNum = tileNum % (this.tilesetImage.width/16);
+        this.ctx.drawImage(this.tilesetImage, 16*rowNum, 16*colNum, 16, 16, x*16, y*16, 16, 16);
     }
 }
