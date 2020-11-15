@@ -58,7 +58,8 @@
             "boundingBox": [{"x": 4, "y": 6}, {"x": 4, "y": 22}, {"x": 24, "y": 22}, {"x": 24, "y": 6}],
             "actions": {
                 "button": true,
-                "door": false
+                "door": false,
+                "end": false
             },
             "state": 0,
             "target": "door"
@@ -72,9 +73,23 @@
             "boundingBox": [{"x": 4, "y": 6}, {"x": 4, "y": 22}, {"x": 24, "y": 22}, {"x": 24, "y": 6}],
             "actions": {
                 "button": false,
-                "door": true                
+                "door": true,
+                "end": false              
             },
             "state": 0
+        },
+        {
+            "name": "end",
+            "src": "End (idle).png",
+            "x": 9,
+            "y": -7,
+            "visible": true,
+            "boundingBox": [{"x": 0, "y": 0}, {"x": 64, "y": 0}, {"x": 64, "y": 64}, {"x": 0, "y": 64}],
+            "actions": {
+                "button": false,
+                "door": false,
+                "end": true       
+            }
         }
     ]
 }

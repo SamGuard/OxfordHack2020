@@ -123,6 +123,8 @@ conHandler.socket.onmessage = function (event) {
         }
     } else if (data.purp == "start") {
         conHandler.startGame(data.data.map);
+    } else if(data.pup == "end"){
+        conHandler.endGame();
     } else {
         console.log("Error purpose not recognise");
     }
