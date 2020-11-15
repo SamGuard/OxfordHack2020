@@ -341,7 +341,7 @@ class Game {
         // Render tick
         //this.showBackground(this.backgroundTileNum);
         this.showMap();
-        this.showObjects();
+        this.showObjects(); 
 
         this.showChars();
 
