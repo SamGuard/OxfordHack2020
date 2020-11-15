@@ -11,6 +11,8 @@ const HORZ_FILL_FACTOR = 0.8;
 
 const TILE_SIZE = 16;
 
+const VERTICAL_FILL = 15;
+
 const ANIM_SPEED = 2; // The bigger the number, the slower.
 
 class SetClass{
@@ -74,8 +76,6 @@ class Game {
         this.endAnim = true; // main player hasn't disappeared
 
         this.animCounter = 0; // Alfie's anim counter
-
-        this.isPlayerOnBox = false;
 
         // Start the game tick loop
         this.gameUpdateInterval = setInterval(function () {
@@ -172,7 +172,7 @@ class Game {
         this.setupPhysics()
 
         // Sets the scale for the canvas (used in the renderer)
-        this.scale = (this.ctx.canvas.height) / ((map.height-1) * 16);
+        this.scale = (this.ctx.canvas.height) / ((VERTICAL_FILL) * 16);
 
         var render = Matter.Render.create({
             canvas: $("#gameCanvas2")[0],
@@ -233,7 +233,7 @@ class Game {
             // If map has been read in update map scaling
             if (conHandler.game.level != null) {
                 console.log("Changed size");
-                conHandler.game.scale = (conHandler.game.ctx.canvas.height) / ((conHandler.game.level.map.height-1) * 16);
+                conHandler.game.scale = (conHandler.game.ctx.canvas.height) / ((VERTICAL_FILL) * 16);
             }
         });
 
@@ -311,13 +311,15 @@ class Game {
         this.ctx.setTransform(1, 0, 0, 1, 0, 0);
         this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
 
+        var minDist = 0.5 * this.scale * 16;
         // Transform the game to fill the canvas vertically
         var hPan = 0.5 * this.ctx.canvas.width - this.scale * player.position.x;
-        if (hPan > 0) {
-            hPan = 0;
-        }
-        console.log(hPan);
-        this.ctx.setTransform(this.scale, 0, 0, this.scale, hPan, 0);
+        hPan = Math.min(-minDist, Math.max(-this.level.map.width * 16 * this.scale + minDist + this.ctx.canvas.width, hPan));
+        var vPan = 0.5 * this.ctx.canvas.height - this.scale * player.position.y;
+        vPan = Math.min(-minDist, Math.max(-this.level.map.height * 16 * this.scale + minDist + this.ctx.canvas.height, vPan));
+
+        console.log("hPan: " + hPan + ", vPan: " + vPan + ", scale: " + this.scale);
+        this.ctx.setTransform(this.scale, 0, 0, this.scale, hPan, vPan);
 
         // Player control physics
         this.updatePlayerPhysics();
@@ -497,7 +499,7 @@ class Game {
         }
 
         if( x1 < 0 || x >= map.width || y1 < 0 || y >= map.height || isNaN(x) || isNaN(y) || isNaN(x1) || isNaN(x)) {
-            return false;
+            return true;
         }
         if(map.structure[y][x] === -1 && map.structure[y1][x] === -1 && map.structure[y][x1] === -1 && map.structure[y1][x1] === -1) {
             return false;
