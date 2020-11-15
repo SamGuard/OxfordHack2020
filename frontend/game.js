@@ -67,8 +67,8 @@ class Game {
         this.lastR = true; // was the char last facing right?
         this.startAnim = true; // Have we played the appear animation?
         this.appear = 0; // appear loop iterator
-        this.disappear = false;//to play animation to remove character make true
         this.end = false;
+		this.dead = false;
 
         this.isPlayerOnBox = false;
 
@@ -97,6 +97,10 @@ class Game {
         this.charAppear.src = "assets/chars/char-appear.png";
         this.charDisappear = new Image();
         this.charDisappear.src = "assets/chars/char-disappear.png";
+		this.charDeadR = new Image();
+        this.charDeadR.src = "assets/chars/spookyscary.png";
+		this.charDeadL = new Image();
+        this.charDeadL.src = "assets/chars/spookyscaryL.png";
         var map = this.level.map;
 
         // Initialises the physics engine
@@ -277,14 +281,11 @@ class Game {
 
         this.showChars();
 
-        if(!this.end){
-            let OutputChar = this.showChar(this.charPlayer1, this.endImage, player.position.x, player.position.y, this.keys[LEFT_KEY], this.keys[RIGHT_KEY], this.lastR, this.startAnim, this.isOnFloor(), player.velocity.y, !this.alive);
-            this.endImage = OutputChar[0];
-            this.lastR = OutputChar[1];
-            this.startAnim = OutputChar[2];
-            this.end = OutputChar[3];
-        }
-        
+		let OutputChar = this.showChar(this.charPlayer1, this.endImage, player.position.x, player.position.y, this.keys[LEFT_KEY], this.keys[RIGHT_KEY], this.lastR, this.startAnim, this.isOnFloor(), player.velocity.y, !this.alive, this.dead);
+		this.endImage = OutputChar[0];
+		this.lastR = OutputChar[1];
+		this.startAnim = OutputChar[2];
+		this.end = OutputChar[3];
 
         this.showObjects();
 
@@ -442,7 +443,7 @@ class Game {
     // -----------------------
 
     // Renders the player icon
-    showChar(playerImage, endImage, xPos, yPos, moveL, moveR, lastR, start, onFloor, yVel, end) {
+    showChar(playerImage, endImage, xPos, yPos, moveL, moveR, lastR, start, onFloor, yVel, end, dead) {
         xPos -= Matter.Vertices.centre(this.level.player.boundingBox).x;
         yPos -= Matter.Vertices.centre(this.level.player.boundingBox).y;
         var curFrame = Math.floor(endImage / ANIM_SPEED);
@@ -455,6 +456,22 @@ class Game {
 				start = false;
 			}
         }
+		else if(dead){
+			if(moveR){
+				lastR = true;
+			}
+			else if(moveL){
+				lastR = false;
+			}
+			if(lastR){
+				this.ctx.drawImage(this.charDeadL, 44*introFrames, 0, 44, 30, xPos, yPos, 44, 30);
+			}else{
+				this.ctx.drawImage(this.charDeadR, 44*introFrames, 0, 44, 30, xPos, yPos, 44, 30);
+			}
+			if(endImage >= 9*ANIM_SPEED*2) {
+                endImage = 0;
+			}
+		}
 		else if(end){ // show Disappear animation 
 			this.ctx.drawImage(this.charDisappear, 96*introFrames, 0, 96, 96, xPos-32, yPos-32, 96, 96);
 			if(endImage >= 6*ANIM_SPEED*2) {
@@ -543,18 +560,19 @@ class Game {
 				var img = this.charPlayer4;
 			}
 			
-            //showChar(playerImage, endImage, xPos, yPos, moveL, moveR, lastR, start, onFloor, yVel, end)
-            if(!player.end){
-                if(player.alive != undefined){
-                    let OutputChar = this.showChar(img, player.endImage, player.x,
-                        player.y, moveL, moveR,
-                        player.lastR, player.start, (Math.abs(player.vy) > 0.01) ? false : true, player.vy, !player.alive);//to run disappear set last value to true
-                    player.endImage = OutputChar[0];
-                    player.lastR = OutputChar[1];
-                    player.start = OutputChar[2];
-                    player.end = OutputChar[3];
-                }
-            }
+			//showChar(playerImage, endImage, xPos, yPos, moveL, moveR, lastR, start, onFloor, yVel, end, dead)
+			/*TO DO
+			HAVE onFloor WORK FOR THE PLAYERS SO THE CORRECT FALLING ANIMATION SHOWS
+			PLAYER IMAGE RELAVTIVE TO JOIN RATHER THAN LOCAL SIDE*/
+			if(player.alive != undefined){
+				let OutputChar = this.showChar(img, player.endImage, player.x,
+					player.y, moveL, moveR,
+					player.lastR, player.start, (Math.abs(player.vy) > 0.01) ? false : true, player.vy, !player.alive, false);//to run disappear set last value to true
+				player.endImage = OutputChar[0];
+				player.lastR = OutputChar[1];
+				player.start = OutputChar[2];
+				player.end = OutputChar[3];
+			}
 
             //this.ctx.drawImage(this.objectImages["box.png"], player.x, player.y);
 
