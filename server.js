@@ -100,18 +100,9 @@ function joinRoom(mess, conn) {
     let roomIndex = findRoomByCode(mess.data.roomCode);
 
     if (roomIndex != -1) {
-        if (rooms[roomIndex].addPlayer(new ID(conn.remoteAddress, mess.id)) == -1) {
-            conn.sendUTF(JSON.stringify({
-                purp: "error",
-                data: { error: "room full" },
-                time: Date.now(),
-                id: conn.id.id
-            }));
-            return;
-        }
         conn.sendUTF(JSON.stringify({
             purp: "joinroom",
-            data: { roomCode: rooms[roomIndex].code },
+            data: { roomCode: rooms[roomIndex].code, playerNumber: rooms[roomIndex].addPlayer(new ID(conn.remoteAddress, mess.id)) },
             time: Date.now(),
             id: conn.id.id
         }));

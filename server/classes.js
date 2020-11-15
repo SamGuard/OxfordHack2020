@@ -32,6 +32,7 @@ class Room {
             this.map.players.push({id: id.id, x: 0, y: 0});
             this.players++;
         }
+        return this.players-1;
     }
 
     updateGame(obj, p){

@@ -38,7 +38,7 @@ class Game {
     // *** GAME SETUP ***
     // ------------------
 
-    constructor(isHost, conn, roomCode) {
+    constructor(isHost, conn, roomCode, playerNumber) {
         //make a game canvas using jquery in the game canvas container.
         $("#gameMenu").hide();
         $('#gameCanvasContainer').show();// Game canvas goes in here
@@ -60,6 +60,8 @@ class Game {
         this.alive = true;
         this.score = 0;
         this.sentMessage = false; //used in endGame to see if the winner has sent the message to the server
+        this.playerNumber = playerNumber;
+        this.skinNumber = Math.floor(Math.random() * 4);
     }
 
     // Function to start the game
@@ -664,6 +666,7 @@ class Game {
                     this.level.players[j].vx = players[i].vx;
                     this.level.players[j].vy = players[i].vy;
                     this.level.players[j].alive = players[i].alive;
+                    this.level.players[j].skinNumber = players[i].skinNumber;
                     found = true;
                     break;
                 }
@@ -676,6 +679,7 @@ class Game {
                 player.vx = players[i].vx;
                 player.vy = players[i].vy;
                 player.alive = players[i].alive;
+                player.skinNumber = players[i].skinNumber;
 
                 player.lastR = true; // was the char last facing right?
                 player.start = true; // Have we played the appear animation?
@@ -720,7 +724,8 @@ class Game {
                 y: this.level.player.obj.position.y, 
                 vx: this.level.player.obj.velocity.x,
                 vy: this.level.player.obj.velocity.y,
-                alive: this.alive
+                alive: this.alive,
+                skinNumber: this.skinNumber
                 } 
             },
             time: Date.now(),
