@@ -57,6 +57,7 @@ class Game {
         $("#gameCanvas2").hide();
 
         this.winner = false;
+        this.alive = true;
     }
 
     // Function to start the game
@@ -66,7 +67,8 @@ class Game {
         this.lastR = true; // was the char last facing right?
         this.startAnim = true; // Have we played the appear animation?
         this.appear = 0; // appear loop iterator
-		this.disappear = false;//to play animation to remove character make true
+        this.disappear = false;//to play animation to remove character make true
+        this.end = false;
 
         this.isPlayerOnBox = false;
 
@@ -275,10 +277,14 @@ class Game {
 
         this.showChars();
 
-		let OutputChar = this.showChar(this.charPlayer1, this.endImage, player.position.x, player.position.y, this.keys[LEFT_KEY], this.keys[RIGHT_KEY], this.lastR, this.startAnim, this.isOnFloor(), player.velocity.y, this.disappear);
-		this.endImage = OutputChar[0];
-		this.lastR = OutputChar[1];
-		this.startAnim = OutputChar[2];
+        if(!this.end){
+            let OutputChar = this.showChar(this.charPlayer1, this.endImage, player.position.x, player.position.y, this.keys[LEFT_KEY], this.keys[RIGHT_KEY], this.lastR, this.startAnim, this.isOnFloor(), player.velocity.y, !this.alive);
+            this.endImage = OutputChar[0];
+            this.lastR = OutputChar[1];
+            this.startAnim = OutputChar[2];
+            this.end = OutputChar[3];
+        }
+        
 
         this.showObjects();
 
@@ -339,6 +345,10 @@ class Game {
 
     // Player physics update
     updatePlayerPhysics() {
+
+        if(!this.alive){
+            return;
+        }
 
         const JUMP_SPEED = 5;
         const LEFT_RIGHT_SPEED = 2.5;
@@ -449,8 +459,10 @@ class Game {
 			this.ctx.drawImage(this.charDisappear, 96*introFrames, 0, 96, 96, xPos-32, yPos-32, 96, 96);
 			if(endImage >= 6*ANIM_SPEED*2) {
                 endImage = 0;
-				end = false;
-			}
+				end = true;
+            }else{
+                end = false;
+            }
         }
         else if(moveR && onFloor) {  // running right
             lastR = true;
@@ -504,7 +516,7 @@ class Game {
                 endImage = 0;
             }
         }
-		return [endImage, lastR, start];
+		return [endImage, lastR, start, end];
     }
 
     showChars() {
@@ -531,17 +543,18 @@ class Game {
 				var img = this.charPlayer4;
 			}
 			
-			//showChar(playerImage, endImage, xPos, yPos, moveL, moveR, lastR, start, onFloor, yVel, end)
-			/*TO DO
-			HAVE onFloor WORK FOR THE PLAYERS SO THE CORRECT FALLING ANIMATION SHOWS
-			PLAYER IMAGE RELAVTIVE TO JOIN RATHER THAN LOCAL SIDE
-			*/
-            let OutputChar = this.showChar(img, player.endImage, player.x,
-                 player.y, moveL, moveR,
-                  player.lastR, player.start, (Math.abs(player.vy) > 0.01) ? false : true, player.vy, false);//to run disappear set last value to true
-		    player.endImage = OutputChar[0];
-		    player.lastR = OutputChar[1];
-		    player.start = OutputChar[2];
+            //showChar(playerImage, endImage, xPos, yPos, moveL, moveR, lastR, start, onFloor, yVel, end)
+            if(!player.end){
+                if(player.alive != undefined){
+                    let OutputChar = this.showChar(img, player.endImage, player.x,
+                        player.y, moveL, moveR,
+                        player.lastR, player.start, (Math.abs(player.vy) > 0.01) ? false : true, player.vy, !player.alive);//to run disappear set last value to true
+                    player.endImage = OutputChar[0];
+                    player.lastR = OutputChar[1];
+                    player.start = OutputChar[2];
+                    player.end = OutputChar[3];
+                }
+            }
 
             //this.ctx.drawImage(this.objectImages["box.png"], player.x, player.y);
 
@@ -615,6 +628,7 @@ class Game {
                     this.level.players[j].y = players[i].y;
                     this.level.players[j].vx = players[i].vx;
                     this.level.players[j].vy = players[i].vy;
+                    this.level.players[j].alive = players[i].alive;
                     found = true;
                     break;
                 }
@@ -626,11 +640,13 @@ class Game {
                 player.y = players[i].y;
                 player.vx = players[i].vx;
                 player.vy = players[i].vy;
+                player.alive = players[i].alive;
 
                 player.lastR = true; // was the char last facing right?
                 player.start = true; // Have we played the appear animation?
                 player.endImage = 0;
                 player.appear = 0; // appear loop iterator
+                player.end = false;
 
 
                 this.level.players.push(player);
@@ -668,7 +684,8 @@ class Game {
                 x: this.level.player.obj.position.x,
                 y: this.level.player.obj.position.y, 
                 vx: this.level.player.obj.velocity.x,
-                vy: this.level.player.obj.velocity.y 
+                vy: this.level.player.obj.velocity.y,
+                alive: this.alive
                 } 
             },
             time: Date.now(),
