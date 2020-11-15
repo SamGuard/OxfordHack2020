@@ -40,12 +40,12 @@ class Game {
     // *** GAME SETUP ***
     // ------------------
 
-    constructor(isHost, conn, roomCode, playerNumber) {
+    constructor(isHost, conn, roomCode, playerNumber, playerName) {
         this.score = 0;
         this.playerNumber = playerNumber;
         this.skinNumber = this.playerNumber;
         this.isHost = isHost;
-        this.playerName = "PLAYER_" + this.playerNumber.toString();
+        this.playerName = playerName;
         this.conn = conn;
         this.roomCode = roomCode;
         this.setup();
