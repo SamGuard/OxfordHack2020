@@ -6,8 +6,8 @@ const DOWN_KEY = 40;
 const PLAYER_WIDTH = 32;
 const PLAYER_HEIGHT = 32;
 
-const VERT_FILL_FACTOR = 0.75;
-const HORZ_FILL_FACTOR = 0.75;
+const VERT_FILL_FACTOR = 0.8;
+const HORZ_FILL_FACTOR = 0.8;
 
 const TILE_SIZE = 16;
 
@@ -58,6 +58,8 @@ class Game {
 
         this.winner = false;
         this.alive = true;
+        this.score = 0;
+        this.sentMessage = false; //used in endGame to see if the winner has sent the message to the server
     }
 
     // Function to start the game
@@ -99,7 +101,11 @@ class Game {
         this.charAppear.src = "assets/chars/char-appear.png";
         this.charDisappear = new Image();
         this.charDisappear.src = "assets/chars/char-disappear.png";
+        this.backgroundImage = new Image();
+        this.backgroundImage.src = "assets/backgroundImage.png";
         var map = this.level.map;
+
+        this.backgroundTileNum = Math.floor(Math.random() * 6);
 
         // Initialises the physics engine
         this.engine = Matter.Engine.create(
@@ -149,7 +155,7 @@ class Game {
         this.setupPhysics()
 
         // Sets the scale for the canvas (used in the renderer)
-        this.scale = (this.ctx.canvas.height) / (map.height * 16);
+        this.scale = (this.ctx.canvas.height) / ((map.height-1) * 16);
 
         var render = Matter.Render.create({
             canvas: $("#gameCanvas2")[0],
@@ -182,7 +188,9 @@ class Game {
                 newObjects[i] = Matter.Bodies.fromVertices(this.level.objects[i].x * 16, this.level.objects[i].y * 16, this.level.objects[i].boundingBox, { isStatic: true, isSensor: true });
             } else if (this.level.objects[i].actions.door == true) {
                 newObjects[i] = Matter.Bodies.fromVertices(this.level.objects[i].x * 16 - 8, this.level.objects[i].y * 16 - 8, this.level.objects[i].boundingBox, { isStatic: true });
-            } else if (this.level.objects[i].actions.end == true) {
+            }  else if (this.level.objects[i].actions.end == true) {
+                newObjects[i] = Matter.Bodies.fromVertices(this.level.objects[i].x * 16 - 8, this.level.objects[i].y * 16 - 8, this.level.objects[i].boundingBox, { isStatic: true, isSensor: true });
+            } else if (this.level.objects[i].actions.collectable == true) {
                 newObjects[i] = Matter.Bodies.fromVertices(this.level.objects[i].x * 16 - 8, this.level.objects[i].y * 16 - 8, this.level.objects[i].boundingBox, { isStatic: true, isSensor: true });
             } else if (this.level.objects[i].actions.kills == true) {
                 newObjects[i] = Matter.Bodies.fromVertices(this.level.objects[i].x * 16, this.level.objects[i].y * 16, this.level.objects[i].boundingBox, { isStatic: true, isSensor: true});
@@ -208,7 +216,7 @@ class Game {
             // If map has been read in update map scaling
             if (conHandler.game.level != null) {
                 console.log("Changed size");
-                conHandler.game.scale = (conHandler.game.ctx.canvas.height) / (conHandler.game.level.map.height * 16);
+                conHandler.game.scale = (conHandler.game.ctx.canvas.height) / ((conHandler.game.level.map.height-1) * 16);
             }
         });
 
@@ -234,36 +242,24 @@ class Game {
             var pairs = event.pairs;
 
             for (var i = 0, j = pairs.length; i != j; ++i) {
-                var pair = pairs[i];
-                if(pair.bodyA.attr != undefined){
-                    if (pair.bodyA.attr.actions.button == true) {
-                        conHandler.game.doButtonThings(pair.bodyA);
-                    }else if(pair.bodyA.attr.actions.end == true){
-                        conHandler.game.winner = true;
-                        conHandler.game.endGame();
-                    } else if(pair.bodyA.attr.actions.kills == true) {
-                        conHandler.game.alive = false;
-                    } else if(pair.bodyA.attr.actions.firelighter == true) {
-                        if(pair.bodyA.attr.state == "on") {
+                var pair = [pairs[i].bodyA, pairs[i].bodyB];
+                for(let p = 0; p < 2; p++){
+                    if(pair[p].attr != undefined){
+                        if (pair[p].attr.actions.button == true) {
+                            conHandler.game.doButtonThings(pair[p]);
+                        }else if(pair[p].attr.actions.end == true){
+                            conHandler.game.winner = true;
+                            conHandler.game.endGame();
+                        }else if(pair[p].attr.actions.collectable == true){
+                            conHandler.game.getObject(pair[p].attr);
+                        } else if(pair[p].attr.actions.kills == true) {
                             conHandler.game.alive = false;
-                        } else if (pair.bodyA.attr.state == "off"){
-                            pair.bodyA.attr.state = "hit";
-                        }
-                    }
-                }
-                if(pair.bodyB.attr != undefined){
-                    if (pair.bodyB.attr.actions.button == true) {
-                        conHandler.game.doButtonThings(pair.bodyB);
-                    }else if(pair.bodyB.attr.actions.end == true){
-                        conHandler.game.winner = true;
-                        conHandler.game.endGame();
-                    } else if(pair.bodyB.attr.actions.kills == true) {
-                        conHandler.game.alive = false;
-                    } else if(pair.bodyB.attr.actions.firelighter == true) {
-                        if(pair.bodyB.attr.state == "on") {
-                            conHandler.game.alive = false;
-                        } else if (pair.bodyB.attr.state == "off"){
-                            pair.bodyB.attr.state = "hit";
+                        } else if(pair[p].attr.actions.firelighter == true) {
+                            if (pair[p].attr.state == "on") {
+                                conHandler.game.alive = false;
+                            } else if (pair[p].attr.state == "off") {
+                                pair[p].attr.state = "hit";
+                            }
                         }
                     }
                 }
@@ -298,12 +294,18 @@ class Game {
         this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
 
         // Transform the game to fill the canvas vertically
-        this.ctx.setTransform(this.scale, 0, 0, this.scale, 0.5 * this.ctx.canvas.width - this.scale * player.position.x, 0.5 * this.ctx.canvas.height - this.scale * player.position.y);
+        var hPan = 0.5 * this.ctx.canvas.width - this.scale * player.position.x;
+        if (hPan > 0) {
+            hPan = 0;
+        }
+        console.log(hPan);
+        this.ctx.setTransform(this.scale, 0, 0, this.scale, hPan, 0);
 
         // Player control physics
         this.updatePlayerPhysics();
         this.checkPlatforms();
 
+        this.showBackground(this.backgroundTileNum);
         // Render tick
         this.showMap();
 
@@ -360,6 +362,16 @@ class Game {
             }
         }
         console.log(obj.attr.name, obj.attr.state);
+
+    }
+
+    getObject(obj){
+        if(obj.state == 1){
+            return;
+        }
+        obj.state = 1;
+        obj.visible = false;
+        this.score++;
 
     }
 
@@ -646,6 +658,15 @@ class Game {
         }
     }
 
+    // Draws a repeating background
+    showBackground(tileNum) {
+        for (var w = 0; w < this.ctx.canvas.width; w += 64) {
+            for (var h = 0; h < this.ctx.canvas.height; h  += 64) {
+                this.ctx.drawImage(this.backgroundImage, tileNum*64, 0, 64, 64, w, h, 64, 64);
+            }
+        }
+    }
+
     // Draws a tile from the tile set in a position
     drawTile(tileNum, x, y) {
         var colNum = Math.floor(tileNum / (this.tilesetImage.width / 16));
@@ -655,19 +676,25 @@ class Game {
 
     endGame(){
         if(this.winner == true){
-            this.conn.send(JSON.stringify({
-                purp: "end",
-                data: { roomCode: this.roomCode},
-                time: Date.now(),
-                id: conHandler.id
-            }));
-            $('#WinOrLooseText').html("You Win");
+            if(this.sentMessage == false){
+                this.sentMessage = true;
+                this.conn.send(JSON.stringify({
+                    purp: "end",
+                    data: { roomCode: this.roomCode},
+                    time: Date.now(),
+                    id: conHandler.id
+                }));
+                $('#WinOrLooseText').html("You Win");
+            }
         }else{
             $('#WinOrLooseText').html("You Loose");
         }
         $('#gameCanvasContainer').hide();
-        $('#gameEndScore').html(`25`);
+        $('#gameEndScore').html(`Score: ${this.score}`);
         $('#gameEndScreen').show();
+
+        clearTimeout(this.gameUpdateInterval);
+        this.engine.events = {};
     }
 
     pull(mess) {

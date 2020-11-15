@@ -59,7 +59,8 @@
             "actions": {
                 "button": true,
                 "door": false,
-                "end": false
+                "end": false,
+                "collectable": false 
             },
             "state": 0,
             "target": "door"
@@ -75,7 +76,8 @@
                 "button": false,
                 "door": true,
                 "end": false,
-                "kills": false
+                "kills": false,
+                "collectable": false
             },
             "state": 0
         },
@@ -83,7 +85,7 @@
             "name": "end",
             "src": "End (idle).png",
             "x": 9,
-            "y": -7,
+            "y": -2,
             "visible": true,
             "boundingBox": [{"x": 0, "y": 0}, {"x": 64, "y": 0}, {"x": 64, "y": 64}, {"x": 0, "y": 64}],
             "actions": {
@@ -156,8 +158,25 @@
                 "door": false,
                 "end": false,
                 "kills": false,
-                "firelighter": true
+                "firelighter": true,
+                "collectable": false
             }
+        },
+        {
+            "name": "apple1",
+            "src": "Apple.png",
+            "x": 7,
+            "y": -3,
+            "visible": true,
+            "boundingBox": [{"x": 0, "y": 0}, {"x": 0, "y": 14}, {"x": 12, "y": 14}, {"x": 12, "y": 0}],
+            "actions": {
+                "button": false,
+                "door": false,
+                "end": false,
+                "collectable": true       
+            },
+            "state": 0
+            
         }
     ]
 }

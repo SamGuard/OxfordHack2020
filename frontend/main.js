@@ -74,6 +74,7 @@ class ConnectionHandler {
         console.log("Start game");
         $('#createGamePage').hide();
         $('#homePage').hide();
+        $('#waitingRoom').hide();
 
         $('#gamePage').show();
         this.gameRunning = true;
@@ -81,6 +82,16 @@ class ConnectionHandler {
         console.log("Game running, isHost: " + this.isHost);
         this.game = new Game(this.isHost, this.socket, this.roomCode);
         this.game.start(map);
+    }
+
+    nextGame(){
+        let data = JSON.stringify({
+            purp: "newGame",
+            data: { roomCode: this.roomCode },
+            time: Date.now(),
+            id: this.id
+        });
+        this.socket.send(data);
     }
 };
 
@@ -125,6 +136,12 @@ conHandler.socket.onmessage = function (event) {
         conHandler.startGame(data.data.map);
     } else if(data.purp == "end"){
         conHandler.game.endGame();
+    } else if(data.purp == "updateWaitingRoom"){
+        if(conHandler.isHost == true){
+            $('#createGamePlayers').html(`Players: ${data.data.numPlayers}`);
+        }else{
+            $('#waitingRoomPlayers').html(`Players: ${data.data.numPlayers}`);
+        }
     } else {
         console.log("Error purpose not recognise");
     }
@@ -150,10 +167,18 @@ $(document).ready(function () {
     $('#gamePage').hide();
     $('#helpScreen').hide();
     $('#createGamePage').hide();
+    $('#waitingRoom').hide();
 
     $('#joinGameButton').click(function () {
         conHandler.roomCode = $('#codeInput').val().toLowerCase();
         conHandler.joinRoom();
+        $('#homePage').hide();
+        $('#gamePage').hide();
+        $('#helpScreen').hide();
+        $('#createGamePage').hide();
+        $('#waitingRoom').show();
+
+        $('#waitingRoomPin').html(conHandler.roomCode);
     });
 
     $('#createGameButton').click(function () {
@@ -162,6 +187,7 @@ $(document).ready(function () {
         $('#helpScreen').hide();
         $('#createGamePage').show();
         conHandler.createRoom();
+        $('#createGamePlayers').html(`Players: ${1}`);
     });
 
     $('#createBackButton').click(function () {
@@ -180,8 +206,17 @@ $(document).ready(function () {
         $('#createGamePage').hide();
     });
 
-    $('#newGameButton').click(function(){
+    $('#exitGame').click(function(){
         window.location = "";
+    });
+
+    $('#newGame').click(function(){
+        conHandler.nextGame();
+        $('#homePage').hide();
+        $('#gamePage').show();
+        $('#helpScreen').hide();
+        $('#createGamePage').hide();
+        $('#waitingRoom').hide();
     });
 
     $('#help').click(function(){

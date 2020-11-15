@@ -115,6 +115,18 @@ function joinRoom(mess, conn) {
             time: Date.now(),
             id: conn.id.id
         }));
+
+        let clients = rooms[roomIndex].getClients();
+
+        for(let i = 0; i < clients.length; i++){
+            let connIndex = findPlayerByID(clients[i]);
+            connections[connIndex].sendUTF(JSON.stringify({
+                purp: "updateWaitingRoom",
+                data: { numPlayers: clients.length },
+                time: Date.now(),
+                id: connections[connIndex].id.id
+            }));
+        }
     } else {
         conn.sendUTF(JSON.stringify({
             purp: "joinroom",
@@ -208,6 +220,17 @@ function endGame(mess, conn){
     }
 }
 
+function newGame(mess, conn){
+    let roomID = mess.data.roomCode;
+    let data = mess.data.objects;
+
+    let room = findRoomByCode(roomID);
+
+    rooms[room].newMap();
+
+    startRoom(mess, conn);
+}
+
 function handleMessage(mess, conn) {
     mess = JSON.parse(mess);
     if (mess.purp == "setid") {
@@ -224,6 +247,8 @@ function handleMessage(mess, conn) {
         gameUpdate(mess, conn);
     } else if(mess.purp == "end"){
         endGame(mess, conn);
+    } else if(mess.purp == "newGame"){
+        newGame(mess, conn);
     } else {
         conn.sendUTF(JSON.stringify({
             purp: "error",
