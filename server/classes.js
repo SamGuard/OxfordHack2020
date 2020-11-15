@@ -10,6 +10,8 @@ class ID {
 //Stores information about the 2 players
 class Room {
     constructor(roomCode, hostID) {
+        this.mapNames = ["map1", "map2"];
+        this.mapIndex = 0;
         this.MAX_PLAYERS = 4
         this.code = roomCode;
         this.clients = [];
@@ -30,6 +32,7 @@ class Room {
             this.map.players.push({id: id.id, x: 0, y: 0});
             this.players++;
         }
+        return this.players-1;
     }
 
     updateGame(obj, p){
@@ -44,7 +47,14 @@ class Room {
         };
     }
 
+    newMap(){
+        this.mapIndex = (this.mapIndex + 1) % 2;
+        this.map = new Map(this.mapNames[this.mapIndex]);
 
+        for(let i = 0; i < this.clients.length; i++){
+            this.map.players.push({id: this.clients[i].id, x: 0, y: 0});
+        }
+    }
 }
 
 class Map{
