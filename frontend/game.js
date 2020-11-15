@@ -152,7 +152,7 @@ class Game {
         this.setupPhysics()
 
         // Sets the scale for the canvas (used in the renderer)
-        this.scale = (this.ctx.canvas.height) / (map.height * 16);
+        this.scale = (this.ctx.canvas.height) / ((map.height-1) * 16);
 
         var render = Matter.Render.create({
             canvas: $("#gameCanvas2")[0],
@@ -201,7 +201,7 @@ class Game {
             // If map has been read in update map scaling
             if (conHandler.game.level != null) {
                 console.log("Changed size");
-                conHandler.game.scale = (conHandler.game.ctx.canvas.height) / (conHandler.game.level.map.height * 16);
+                conHandler.game.scale = (conHandler.game.ctx.canvas.height) / ((conHandler.game.level.map.height-1) * 16);
             }
         });
 
