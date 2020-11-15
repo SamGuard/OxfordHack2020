@@ -58,6 +58,7 @@ class Game {
 
         this.winner = false;
         this.alive = true;
+        this.score = 0;
     }
 
     // Function to start the game
@@ -176,7 +177,9 @@ class Game {
                 newObjects[i] = Matter.Bodies.fromVertices(this.level.objects[i].x * 16, this.level.objects[i].y * 16, this.level.objects[i].boundingBox, { isStatic: true, isSensor: true });
             } else if (this.level.objects[i].actions.door == true) {
                 newObjects[i] = Matter.Bodies.fromVertices(this.level.objects[i].x * 16 - 8, this.level.objects[i].y * 16 - 8, this.level.objects[i].boundingBox, { isStatic: true });
-            }   else if (this.level.objects[i].actions.end == true) {
+            }  else if (this.level.objects[i].actions.end == true) {
+                newObjects[i] = Matter.Bodies.fromVertices(this.level.objects[i].x * 16 - 8, this.level.objects[i].y * 16 - 8, this.level.objects[i].boundingBox, { isStatic: true, isSensor: true });
+            } else if (this.level.objects[i].actions.collectable == true) {
                 newObjects[i] = Matter.Bodies.fromVertices(this.level.objects[i].x * 16 - 8, this.level.objects[i].y * 16 - 8, this.level.objects[i].boundingBox, { isStatic: true, isSensor: true });
             }
             newObjects[i].attr = this.level.objects[i];
@@ -224,21 +227,17 @@ class Game {
             var pairs = event.pairs;
 
             for (var i = 0, j = pairs.length; i != j; ++i) {
-                var pair = pairs[i];
-                if(pair.bodyA.attr != undefined){
-                    if (pair.bodyA.attr.actions.button == true) {
-                        conHandler.game.doButtonThings(pair.bodyA);
-                    }else if(pair.bodyA.attr.actions.end == true){
-                        conHandler.game.winner = true;
-                        conHandler.game.endGame();
-                    }
-                }
-                if(pair.bodyB.attr != undefined){
-                    if (pair.bodyB.attr.actions.button == true) {
-                        conHandler.game.doButtonThings(pair.bodyB);
-                    }else if(pair.bodyB.attr.actions.end == true){
-                        conHandler.game.winner = true;
-                        conHandler.game.endGame();
+                var pair = [pairs[i].bodyA, pairs[i].bodyB];
+                for(let p = 0; p < 2; p++){
+                    if(pair[p].attr != undefined){
+                        if (pair[p].attr.actions.button == true) {
+                            conHandler.game.doButtonThings(pair[p]);
+                        }else if(pair[p].attr.actions.end == true){
+                            conHandler.game.winner = true;
+                            conHandler.game.endGame();
+                        }else if(pair[p].attr.actions.collectable == true){
+                            conHandler.game.getObject(pair[p].attr);
+                        }
                     }
                 }
             }
@@ -338,6 +337,16 @@ class Game {
             }
         }
         console.log(obj.attr.name, obj.attr.state);
+
+    }
+
+    getObject(obj){
+        if(obj.state == 1){
+            return;
+        }
+        obj.state = 1;
+        obj.visible = false;
+        this.score++;
 
     }
 
@@ -627,7 +636,7 @@ class Game {
             $('#WinOrLooseText').html("You Loose");
         }
         $('#gameCanvasContainer').hide();
-        $('#gameEndScore').html(`25`);
+        $('#gameEndScore').html(`Score: ${this.score}`);
         $('#gameEndScreen').show();
     }
 

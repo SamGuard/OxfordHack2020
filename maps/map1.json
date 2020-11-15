@@ -59,7 +59,8 @@
             "actions": {
                 "button": true,
                 "door": false,
-                "end": false
+                "end": false,
+                "collectable": false 
             },
             "state": 0,
             "target": "door"
@@ -74,7 +75,8 @@
             "actions": {
                 "button": false,
                 "door": true,
-                "end": false              
+                "end": false,
+                "collectable": false               
             },
             "state": 0
         },
@@ -88,8 +90,25 @@
             "actions": {
                 "button": false,
                 "door": false,
-                "end": true       
+                "end": true,
+                "collectable": false      
             }
+        },
+        {
+            "name": "apple1",
+            "src": "Apple.png",
+            "x": 7,
+            "y": -3,
+            "visible": true,
+            "boundingBox": [{"x": 0, "y": 0}, {"x": 0, "y": 14}, {"x": 12, "y": 14}, {"x": 12, "y": 0}],
+            "actions": {
+                "button": false,
+                "door": false,
+                "end": false,
+                "collectable": true       
+            },
+            "state": 0
+            
         }
     ]
 }

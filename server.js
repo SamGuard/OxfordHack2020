@@ -115,6 +115,18 @@ function joinRoom(mess, conn) {
             time: Date.now(),
             id: conn.id.id
         }));
+
+        let clients = rooms[roomIndex].getClients();
+
+        for(let i = 0; i < clients.length; i++){
+            let connIndex = findPlayerByID(clients[i]);
+            connections[connIndex].sendUTF(JSON.stringify({
+                purp: "updateWaitingRoom",
+                data: { numPlayers: clients.length },
+                time: Date.now(),
+                id: connections[connIndex].id.id
+            }));
+        }
     } else {
         conn.sendUTF(JSON.stringify({
             purp: "joinroom",
