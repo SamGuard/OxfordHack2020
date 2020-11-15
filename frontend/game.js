@@ -68,7 +68,7 @@ class Game {
         this.startAnim = true; // Have we played the appear animation?
         this.appear = 0; // appear loop iterator
         this.end = false;
-		this.dead = false;
+		this.dead = true;
 
         this.isPlayerOnBox = false;
 
@@ -210,7 +210,7 @@ class Game {
 
             if(e.keyCode == 84) {
                 conHandler.game.idDebug = !conHandler.game.idDebug;
-                if(conHandler.game.idDebug) {
+                if(conHandler.game.idDebug) { 
                     $("#gameCanvas2").show();
                 } else {
                     $("#gameCanvas2").hide();
@@ -352,10 +352,6 @@ class Game {
 
     // Player physics update
     updatePlayerPhysics() {
-
-        if(!this.alive){
-            return;
-        }
 
         const JUMP_SPEED = 5;
         const LEFT_RIGHT_SPEED = 2.5;
