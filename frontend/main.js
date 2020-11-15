@@ -13,6 +13,7 @@ class ConnectionHandler {
         this.isHost = true;
         this.gameRunning = false;
         this.roomCode = "";
+        this.playerNumber = -1;
         this.game;
         this.id = makeid(6);
         console.log("Your id is: " + this.id);
@@ -31,6 +32,7 @@ class ConnectionHandler {
     }
 
     createRoom() {
+        this.playerNumber = 0;
         let data = JSON.stringify({
             purp: "createroom",
             data: {},
@@ -70,7 +72,7 @@ class ConnectionHandler {
         this.socket.send(data);
     }
 
-    startGame(map) {
+    startGame(map, playerNumber) {
         console.log("Start game");
         $('#createGamePage').hide();
         $('#homePage').hide();
@@ -80,8 +82,18 @@ class ConnectionHandler {
         this.gameRunning = true;
 
         console.log("Game running, isHost: " + this.isHost);
-        this.game = new Game(this.isHost, this.socket, this.roomCode);
+        this.game = new Game(this.isHost, this.socket, this.roomCode, this.playerNumber);
         this.game.start(map);
+    }
+
+    nextGame(){
+        let data = JSON.stringify({
+            purp: "newGame",
+            data: { roomCode: this.roomCode },
+            time: Date.now(),
+            id: this.id
+        });
+        this.socket.send(data);
     }
 };
 
@@ -116,6 +128,7 @@ conHandler.socket.onmessage = function (event) {
         console.log(conHandler.roomCode);
         $('#createGamePin').html(`<b>${conHandler.roomCode}</b><br>`);
     } else if (data.purp == "joinroom") {
+        conHandler.playerNumber = data.data.playerNumber;
         if (data.data.roomCode == -1) {
             console.log("Error joining room");
         } else {
@@ -196,8 +209,17 @@ $(document).ready(function () {
         $('#createGamePage').hide();
     });
 
-    $('#newGameButton').click(function(){
+    $('#exitGame').click(function(){
         window.location = "";
+    });
+
+    $('#newGame').click(function(){
+        conHandler.nextGame();
+        $('#homePage').hide();
+        $('#gamePage').show();
+        $('#helpScreen').hide();
+        $('#createGamePage').hide();
+        $('#waitingRoom').hide();
     });
 
     $('#help').click(function(){
