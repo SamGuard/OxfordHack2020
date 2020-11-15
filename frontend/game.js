@@ -39,6 +39,10 @@ class Game {
     // ------------------
 
     constructor(isHost, conn, roomCode, playerNumber) {
+        this.setup(isHost, conn, roomCode, playerNumber);
+    }
+
+    setup(isHost, conn, roomCode, playerNumber){
         //make a game canvas using jquery in the game canvas container.
         $("#gameMenu").hide();
         $('#gameCanvasContainer').show();// Game canvas goes in here
@@ -61,7 +65,12 @@ class Game {
         this.score = 0;
         this.sentMessage = false; //used in endGame to see if the winner has sent the message to the server
         this.playerNumber = playerNumber;
-        this.skinNumber = Math.floor(Math.random() * 4);
+        this.skinNumber = this.playerNumber;
+        this.playerName = "PLAYER_" + this.playerNumber.toString();
+    }
+
+    reset(){
+        this.setup(this.isHost, this.conn, this.roomCode, this.playerNumber);
     }
 
     // Function to start the game
@@ -89,15 +98,14 @@ class Game {
         this.tilesetImage = new Image();
         this.tilesetImage.src = "assets/" + this.level.map.tileset;
 
-        // Import the character image
-		this.charPlayer1 = new Image();
-		this.charPlayer1.src = "assets/chars/player1.png";
-		this.charPlayer2 = new Image();
-		this.charPlayer2.src = "assets/chars/player2.png";
-		this.charPlayer3 = new Image();
-		this.charPlayer3.src = "assets/chars/player3.png";
-		this.charPlayer4 = new Image();
-		this.charPlayer4.src = "assets/chars/player4.png";
+        // Import the character images
+        this.charImages = [new Image(), new Image(), new Image(), new Image()];
+		this.charImages[0].src = "assets/chars/player1.png";
+		this.charImages[1].src = "assets/chars/player2.png";
+		this.charImages[2].src = "assets/chars/player3.png";
+		this.charImages[3].src = "assets/chars/player4.png";
+        // charPlayer1 - charPlayer4
+
 		this.charAppear = new Image();
         this.charAppear.src = "assets/chars/char-appear.png";
         this.charDisappear = new Image();
@@ -116,7 +124,7 @@ class Game {
         this.engine = Matter.Engine.create(
        );
         this.world = this.engine.world;
-        this.world.gravity.y = 0.4;
+        this.world.gravity.y = 0.6;
 
         // Add rectangles to contain world
 
@@ -232,7 +240,6 @@ class Game {
             conHandler.game.setupCanvas(window.innerWidth * HORZ_FILL_FACTOR, window.innerHeight * VERT_FILL_FACTOR);
             // If map has been read in update map scaling
             if (conHandler.game.level != null) {
-                console.log("Changed size");
                 conHandler.game.scale = (conHandler.game.ctx.canvas.height) / ((conHandler.game.level.map.height-1) * 16);
             }
         });
@@ -295,6 +302,12 @@ class Game {
         this.ctx.fillStyle = "#F0F8FF";
         this.ctx.fillRect(0, 0, width, height);
         this.ctx.imageSmoothingEnabled = false;
+        let f = new FontFace('the8bit', 'url(assets/font/SuperLegendBoy-4w8Y.ttf)');
+        f.load().then(function() {
+            conHandler.game.ctx.font = "4px the8bit";
+
+
+        });
     }
 
     // ------------------
@@ -316,26 +329,26 @@ class Game {
         if (hPan > 0) {
             hPan = 0;
         }
-        console.log(hPan);
         this.ctx.setTransform(this.scale, 0, 0, this.scale, hPan, 0);
 
         // Player control physics
         this.updatePlayerPhysics();
         this.checkPlatforms();
 
-        this.showBackground(this.backgroundTileNum);
         // Render tick
+        this.showBackground(this.backgroundTileNum);
         this.showMap();
+        this.showObjects();
 
         this.showChars();
 
-		let OutputChar = this.showChar(this.charPlayer1, this.endImage, player.position.x, player.position.y, this.keys[LEFT_KEY], this.keys[RIGHT_KEY], this.lastR, this.startAnim, this.isOnFloor(), player.velocity.y, this.alive, this.endAnim);
+        var image = this.charImages[this.skinNumber];
+		let OutputChar = this.showChar(image, this.endImage, player.position.x, player.position.y, this.keys[LEFT_KEY], this.keys[RIGHT_KEY], this.lastR, this.startAnim, this.isOnFloor(), player.velocity.y, this.alive, this.endAnim, this.playerName, this.playerNumber);
 		this.endImage = OutputChar[0];
 		this.lastR = OutputChar[1];
 		this.startAnim = OutputChar[2];
 		this.endAnim = OutputChar[3];
 
-        this.showObjects();
 
         // Physics tick
         Matter.Engine.update(this.engine, 20);
@@ -371,13 +384,8 @@ class Game {
 
                     o.attr.visible = true;
                 }
-
-
-                console.log("switched");
             }
         }
-        console.log(obj.attr.name, obj.attr.state);
-
     }
 
     getObject(obj){
@@ -521,13 +529,20 @@ class Game {
     // -----------------------
 
     // Renders the player icon
-    showChar(playerImage, endImage, xPos, yPos, moveL, moveR, lastR, start, onFloor, yVel, alive, end) {
+    showChar(playerImage, endImage, xPos, yPos, moveL, moveR, lastR, start, onFloor, yVel, alive, end, playerName, playerNumber) {
 
         xPos -= Matter.Vertices.centre(this.level.player.boundingBox).x;
         yPos -= Matter.Vertices.centre(this.level.player.boundingBox).y;
         var curFrame = Math.floor(endImage / ANIM_SPEED);
         var introFrames = Math.floor(endImage / ANIM_SPEED / 2);
         endImage++;
+        this.ctx.strokeText(playerName, xPos+16-this.ctx.measureText(playerName).width/2, yPos);
+
+        this.ctx.fillText(playerName, xPos+16-this.ctx.measureText(playerName).width/2, yPos);
+        
+        if (this.playerNumber != playerNumber) {
+            this.ctx.filter = "opacity(50%)";
+        }
 		if(start){ // show appear animation
 			this.ctx.drawImage(this.charAppear, 96*introFrames, 0, 96, 96, xPos-32, yPos-32, 96, 96);
 			if(endImage >= 6*ANIM_SPEED*2) {
@@ -612,6 +627,7 @@ class Game {
                 endImage = 0;
             }
         }
+        this.ctx.filter = "none"; 
 		return [endImage, lastR, start, end];
     }
 
@@ -630,28 +646,19 @@ class Game {
                 moveL = false;
                 moveR = true;
             }
-			if(i == 0){
-				var img = this.charPlayer2;
-			}
-			else if(i == 1){
-				var img = this.charPlayer3;
-			}else{
-				var img = this.charPlayer4;
-			}
-			
-			//showChar(playerImage, endImage, xPos, yPos, moveL, moveR, lastR, start, onFloor, yVel, dead)
-			/*TO DO
-			HAVE onFloor WORK FOR THE PLAYERS SO THE CORRECT FALLING ANIMATION SHOWS
-			PLAYER IMAGE RELAVTIVE TO JOIN RATHER THAN LOCAL SIDE*/
-			if(player.alive != undefined){
-				let OutputChar = this.showChar(img, player.endImage, player.x,
-					player.y, moveL, moveR,
-					player.lastR, player.start, (Math.abs(player.vy) > 0.01) ? false : true, player.vy, player.alive, player.end);//to run disappear set last value to true
-				player.endImage = OutputChar[0];
-				player.lastR = OutputChar[1];
-				player.start = OutputChar[2];
-				player.end = OutputChar[3];
-			}
+            var img = this.charImages[player.skinNumber];
+
+            //showChar(playerImage, endImage, xPos, yPos, moveL, moveR, lastR, start, onFloor, yVel, end)
+            if(player.alive != undefined){
+                let OutputChar = this.showChar(img, player.endImage, player.x,
+                    player.y, moveL, moveR,
+                    player.lastR, player.start, (Math.abs(player.vy) > 0.01) ? false : true, player.vy, player.alive, player.end, player.playerName, player.playerNumber);//to run disappear set last value to true
+                player.endImage = OutputChar[0];
+                player.lastR = OutputChar[1];
+                player.start = OutputChar[2];
+                player.end = OutputChar[3];
+            }
+            
 
             //this.ctx.drawImage(this.objectImages["box.png"], player.x, player.y);
 
@@ -737,10 +744,10 @@ class Game {
                     time: Date.now(),
                     id: conHandler.id
                 }));
-                $('#WinOrLooseText').html("You Win");
+                $('#WinOrLoseText').html("You Win");
             }
         }else{
-            $('#WinOrLooseText').html("You Loose");
+            $('#WinOrLoseText').html("You Lose");
         }
         $('#gameCanvasContainer').hide();
         $('#gameEndScore').html(`Score: ${this.score}`);
@@ -768,6 +775,7 @@ class Game {
                     this.level.players[j].vy = players[i].vy;
                     this.level.players[j].alive = players[i].alive;
                     this.level.players[j].skinNumber = players[i].skinNumber;
+                    this.level.players[j].playerName = players[i].playerName;
                     found = true;
                     break;
                 }
@@ -781,6 +789,7 @@ class Game {
                 player.vy = players[i].vy;
                 player.alive = players[i].alive;
                 player.skinNumber = players[i].skinNumber;
+                player.playerName = players[i].playerName;
 
                 player.lastR = true; // was the char last facing right?
                 player.start = true; // Have we played the appear animation?
@@ -824,7 +833,8 @@ class Game {
                 vx: this.level.player.obj.velocity.x,
                 vy: this.level.player.obj.velocity.y,
                 alive: this.alive,
-                skinNumber: this.skinNumber
+                skinNumber: this.skinNumber,
+                playerName: this.playerName
                 } 
             },
             time: Date.now(),

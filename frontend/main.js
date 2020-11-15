@@ -14,7 +14,7 @@ class ConnectionHandler {
         this.gameRunning = false;
         this.roomCode = "";
         this.playerNumber = -1;
-        this.game;
+        this.game = undefined;
         this.id = makeid(6);
         console.log("Your id is: " + this.id);
 
@@ -79,11 +79,16 @@ class ConnectionHandler {
         $('#waitingRoom').hide();
 
         $('#gamePage').show();
-        this.gameRunning = true;
+        if(this.game != undefined){
+            this.game.reset();
+            this.game.start(map);
+        }else{
+            this.gameRunning = true;
 
-        console.log("Game running, isHost: " + this.isHost);
-        this.game = new Game(this.isHost, this.socket, this.roomCode, this.playerNumber);
-        this.game.start(map);
+            console.log("Game running, isHost: " + this.isHost);
+            this.game = new Game(this.isHost, this.socket, this.roomCode, this.playerNumber);
+            this.game.start(map);
+        }
     }
 
     nextGame(){
