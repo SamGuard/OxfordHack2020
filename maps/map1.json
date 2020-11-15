@@ -46,7 +46,7 @@
         "startPositions": [
             {"x": 4, "y": 3}
         ],
-        "boundingBox": [{"x": 5, "y": 6}, {"x": 5, "y": 36}, {"x": 26, "y": 36}, {"x": 26, "y": 6}]
+        "boundingBox": [{"x": 5, "y": 7}, {"x": 5, "y": 32}, {"x": 28, "y": 32}, {"x": 28, "y": 7}]
     },
     "objects": [
         {
@@ -55,7 +55,7 @@
             "x": 7,
             "y": 5,
             "visible": true,
-            "boundingBox": [{"x": 4, "y": 6}, {"x": 4, "y": 22}, {"x": 24, "y": 22}, {"x": 24, "y": 6}],
+            "boundingBox": [{"x": 4, "y": 2}, {"x": 4, "y": 22}, {"x": 24, "y": 22}, {"x": 24, "y": 2}],
             "actions": {
                 "button": true,
                 "door": false
@@ -69,7 +69,7 @@
             "x": 3,
             "y": 5,
             "visible": true,
-            "boundingBox": [{"x": 4, "y": 6}, {"x": 4, "y": 22}, {"x": 24, "y": 22}, {"x": 24, "y": 6}],
+            "boundingBox": [{"x": 4, "y": 2}, {"x": 4, "y": 22}, {"x": 24, "y": 22}, {"x": 24, "y": 2}],
             "actions": {
                 "button": false,
                 "door": true                
