@@ -54,34 +54,25 @@
             "src": "box.png",
             "x": 7,
             "y": 5,
+            "visible": true,
             "boundingBox": [{"x": 4, "y": 6}, {"x": 4, "y": 22}, {"x": 24, "y": 22}, {"x": 24, "y": 6}],
             "actions": {
-                "moveable": true,
-                "toggle": true
+                "button": true,
+                "door": false
             },
-            "state": 0
+            "state": 0,
+            "target": "door"
         },
         {
-            "name": "box1",
+            "name": "door",
             "src": "box.png",
             "x": 3,
             "y": 5,
+            "visible": true,
             "boundingBox": [{"x": 4, "y": 6}, {"x": 4, "y": 22}, {"x": 24, "y": 22}, {"x": 24, "y": 6}],
             "actions": {
-                "moveable": true,
-                "toggle": true
-            },
-            "state": 0
-        },
-        {
-            "name": "box2",
-            "src": "box.png",
-            "x": 9,
-            "y": 5,
-            "boundingBox": [{"x": 4, "y": 6}, {"x": 4, "y": 22}, {"x": 24, "y": 22}, {"x": 24, "y": 6}],
-            "actions": {
-                "moveable": true,
-                "toggle": true
+                "button": false,
+                "door": true                
             },
             "state": 0
         }

@@ -10,6 +10,24 @@ const TILE_SIZE = 16;
 
 const ANIM_SPEED = 2; // The bigger the number, the slower.
 
+class Set{
+    constructor(){
+        this.data = [];
+    }
+
+    push(val){
+        for(let i = 0; i < this.data.length; i++){
+            if(this.data[i] == val){
+                return;
+            }
+        }
+        this.data.push(val);
+    }
+
+    pop(){
+        return this.data.pop();
+    }
+}
 
 class Game {
 
@@ -23,12 +41,14 @@ class Game {
         $('#gameCanvasContainer').show();// Game canvas goes in here
         $('#gameEndScreen').hide();
 
-        this.setupCanvas(window.innerWidth/2, window.innerHeight/2);
+        this.setupCanvas(window.innerWidth / 2, window.innerHeight / 2);
         this.keys = [];
 
         this.isHost = isHost;
         this.conn = conn;
         this.roomCode = roomCode;
+
+        this.objectUpdateList = new Set();
     }
 
     // Function to start the game
@@ -36,10 +56,10 @@ class Game {
     start(map) {
         this.endImage = 0; // image loop iterator
 
-		this.lastR = true; // was the char last facing right?
-		this.start = true; // Have we played the appear animation?
+        this.lastR = true; // was the char last facing right?
+        this.start = true; // Have we played the appear animation?
         this.appear = 0; // appear loop iterator
-        
+
         // Start the game tick loop
         this.gameUpdateInterval = setInterval(function () {
             conHandler.game.update();
@@ -54,23 +74,23 @@ class Game {
 
         // Import the character image
         // TODO: Change this to a tile set and add character animation
-		this.charRunRight = new Image();
-		this.charRunRight.src = "assets/chars/char1-runRight.png";
-		this.charRunLeft = new Image();
-		this.charRunLeft.src = "assets/chars/char1-runLeft.png";
-		this.charIdleRight = new Image();
-		this.charIdleRight.src = "assets/chars/char1-idleRight.png";
-		this.charIdleLeft = new Image();
+        this.charRunRight = new Image();
+        this.charRunRight.src = "assets/chars/char1-runRight.png";
+        this.charRunLeft = new Image();
+        this.charRunLeft.src = "assets/chars/char1-runLeft.png";
+        this.charIdleRight = new Image();
+        this.charIdleRight.src = "assets/chars/char1-idleRight.png";
+        this.charIdleLeft = new Image();
         this.charIdleLeft.src = "assets/chars/char1-idleLeft.png";
         this.charJumpLeft = new Image();
         this.charJumpLeft.src = "assets/chars/char1-jumpLeft.png";
         this.charJumpRight = new Image();
         this.charJumpRight.src = "assets/chars/char1-jumpRight.png";
         this.charFallLeft = new Image();
-		this.charFallLeft.src = "assets/chars/char1-fallLeft.png";
+        this.charFallLeft.src = "assets/chars/char1-fallLeft.png";
         this.charFallRight = new Image();
-		this.charFallRight.src = "assets/chars/char1-fallRight.png";
-		this.charAppear = new Image();
+        this.charFallRight.src = "assets/chars/char1-fallRight.png";
+        this.charAppear = new Image();
         this.charAppear.src = "assets/chars/char-appear.png";
         this.charDisappear = new Image();
         this.charDisappear.src = "assets/chars/char-disappear.png";
@@ -89,12 +109,12 @@ class Game {
                         var custom = this.level.map.customTiles[tileType];
                         if ("boundingBox" in custom) {
                             console.log(Matter.Vertices.centre(custom.boundingBox));
-                            Matter.World.add(this.world, [Matter.Bodies.fromVertices(col*16 - (16 - Matter.Vertices.centre(custom.boundingBox).x),row*16 - (16 - Matter.Vertices.centre(custom.boundingBox).y), custom.boundingBox, { isStatic: true })]);
+                            Matter.World.add(this.world, [Matter.Bodies.fromVertices(col * 16 - (16 - Matter.Vertices.centre(custom.boundingBox).x), row * 16 - (16 - Matter.Vertices.centre(custom.boundingBox).y), custom.boundingBox, { isStatic: true })]);
 
                             continue;
                         }
                     }
-                    Matter.World.add(this.world, [Matter.Bodies.rectangle(col*16-8,row*16-8,16,16, { isStatic: true })]);
+                    Matter.World.add(this.world, [Matter.Bodies.rectangle(col * 16 - 8, row * 16 - 8, 16, 16, { isStatic: true })]);
                 }
             }
         }
@@ -102,7 +122,7 @@ class Game {
         var player = this.level.player;
 
         // Make player physics object
-        player.obj = Matter.Bodies.fromVertices(player.startPositions[0].x*16-8, player.startPositions[0].y*16-8, player.boundingBox, {inertia: Infinity});
+        player.obj = Matter.Bodies.fromVertices(player.startPositions[0].x * 16 - 8, player.startPositions[0].y * 16 - 8, player.boundingBox, { inertia: Infinity });
 
         //player.obj = Matter.Bodies.rectangle(player.startPositions[0].x*16-8, player.startPositions[0].y*16-8, 32, 32, { inertia: Infinity });
         Matter.World.add(this.world, [player.obj]);
@@ -128,15 +148,20 @@ class Game {
 
         //Objects
         let newObjects = [];
-        for(let i = 0; i < this.level.objects.length; i++){
+        this.objectImages = {};
+        for (let i = 0; i < this.level.objects.length; i++) {
             newObjects.push({});
 
-            this.level.objects[i].image = new Image();
-            this.level.objects[i].image.src = "assets/" + this.level.objects[i].src;
-            
-            newObjects[i] = Matter.Bodies.fromVertices(this.level.objects[i].x*16-8, this.level.objects[i].y*16-8, this.level.objects[i].boundingBox, {isStatic: true, isSensor: true});
-            newObjects[i].attr = this.level.objects[i];
+            this.objectImages[this.level.objects[i].src] = new Image();
+            this.objectImages[this.level.objects[i].src].src = "assets/" + this.level.objects[i].src;
 
+            if (this.level.objects[i].actions.button == true) {
+                newObjects[i] = Matter.Bodies.fromVertices(this.level.objects[i].x * 16 - 8, this.level.objects[i].y * 16 - 8, this.level.objects[i].boundingBox, { isStatic: true, isSensor: true });
+            } else if (this.level.objects[i].actions.door == true) {
+                newObjects[i] = Matter.Bodies.fromVertices(this.level.objects[i].x * 16 - 8, this.level.objects[i].y * 16 - 8, this.level.objects[i].boundingBox, { isStatic: true });
+            }
+
+            newObjects[i].attr = this.level.objects[i];
             Matter.World.add(this.world, [newObjects[i]]);
         }
 
@@ -146,32 +171,32 @@ class Game {
     // Adds any event handlers needed
     setupEvents() {
         // On a resize change size of canvas and redo scale
-        $(window).resize(function() {
-            conHandler.game.setupCanvas(window.innerWidth/2, window.innerHeight/2);
+        $(window).resize(function () {
+            conHandler.game.setupCanvas(window.innerWidth / 2, window.innerHeight / 2);
             // If map has been read in update map scaling
-            if(conHandler.game.level != null) {
+            if (conHandler.game.level != null) {
                 console.log("Changed size");
                 conHandler.game.scale = (conHandler.game.ctx.canvas.height) / (conHandler.game.level.map.height * 16);
             }
         });
 
         // Store the current state of the keys in a dict so they can always be looked up
-        $(window).keydown(function(e) {
+        $(window).keydown(function (e) {
             conHandler.game.keys[e.keyCode] = true;
         });
 
-        $(window).keyup(function(e) {
+        $(window).keyup(function (e) {
             conHandler.game.keys[e.keyCode] = false;
         });
 
-        Matter.Events.on(this.engine, 'collisionStart', function(event) {
+        Matter.Events.on(this.engine, 'collisionStart', function (event) {
             var pairs = event.pairs;
-            
+
             for (var i = 0, j = pairs.length; i != j; ++i) {
                 var pair = pairs[i];
-                if (pair.bodyA.attr != undefined && pair.bodyA.attr.actions.toggle == true) {
+                if (pair.bodyA.attr != undefined && pair.bodyA.attr.actions.button == true) {
                     conHandler.game.doButtonThings(pair.bodyA);
-                } else if (pair.bodyB.attr != undefined && pair.bodyB.attr.actions.toggle == true) {
+                } else if (pair.bodyB.attr != undefined && pair.bodyB.attr.actions.button == true) {
                     conHandler.game.doButtonThings(pair.bodyB);
                 }
             }
@@ -187,7 +212,7 @@ class Game {
 
         this.ctx.fillStyle = "#F0F8FF";
         this.ctx.fillRect(0, 0, width, height);
-        this.ctx.imageSmoothingEnabled= false;
+        this.ctx.imageSmoothingEnabled = false;
     }
 
     // ------------------
@@ -195,7 +220,7 @@ class Game {
     // ------------------
 
     // This runs every game tick
-    update(){
+    update() {
         var player = this.level.player.obj;
 
         // Clear the canvas
@@ -203,13 +228,13 @@ class Game {
         this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
 
         // Transform the game to fill the canvas vertically
-        this.ctx.setTransform(this.scale, 0, 0, this.scale, 0.5*this.ctx.canvas.width - this.scale * player.position.x, 0.5*this.ctx.canvas.height - this.scale * player.position.y);
+        this.ctx.setTransform(this.scale, 0, 0, this.scale, 0.5 * this.ctx.canvas.width - this.scale * player.position.x, 0.5 * this.ctx.canvas.height - this.scale * player.position.y);
 
         this.updatePlayerPhysics();
 
         // Render tick
         this.showMap();
-        
+
         this.showChars();
 
         this.showChar();
@@ -220,13 +245,42 @@ class Game {
         this.push(this.level.player.obj.position.x, this.level.player.obj.position.y);
     }
 
-    doButtonThings(obj){
-        if(obj.attr.state == 0){
+    doButtonThings(obj) {
+        this.objectUpdateList.push(obj);
+        if (obj.attr.state == 0) {
             obj.attr.state = 1;
-        }else{
+        } else {
             obj.attr.state = 0;
         }
+
+        for (let i = 0; i < this.level.objects.length; i++) {
+            let o = this.level.objects[i];
+            if (o.attr.name == obj.attr.target) {
+                this.objectUpdateList.push(o);
+                if (o.attr.state == 0) {
+                    o.attr.state = 1;
+
+                    o.collisionFilter.group =  -1;
+                    o.collisionFilter.category =  2;
+                    o.collisionFilter.mask =  0;
+                        
+                    o.attr.visible = false;
+                } else {
+                    o.attr.state = 0;
+
+                    o.collisionFilter.group =  0;
+                    o.collisionFilter.category =  1;
+                    o.collisionFilter.mask =  4294967295;
+
+                    o.attr.visible = true;
+                }
+
+
+                console.log("switched");
+            }
+        }
         console.log(obj.attr.name, obj.attr.state);
+
     }
 
     // -----------------------
@@ -250,27 +304,27 @@ class Game {
 
         var player = this.level.player.obj;
 
-        if(this.isOnFloor()) {
-            var velocity = {x: player.velocity.x, y: player.velocity.y}
+        if (this.isOnFloor()) {
+            var velocity = { x: player.velocity.x, y: player.velocity.y }
 
-            if(this.keys[UP_KEY]) {
-                velocity.y = (velocity.y - JUMP_SPEED) /2;
+            if (this.keys[UP_KEY]) {
+                velocity.y = (velocity.y - JUMP_SPEED) / 2;
             }
-            if(this.keys[LEFT_KEY] && this.keys[RIGHT_KEY]) {
+            if (this.keys[LEFT_KEY] && this.keys[RIGHT_KEY]) {
                 velocity.x = velocity.x / 2;
-            } else if(this.keys[RIGHT_KEY]) {
-                velocity.x = (velocity.x + LEFT_RIGHT_SPEED) /2;
-            } else if(this.keys[LEFT_KEY]) {
+            } else if (this.keys[RIGHT_KEY]) {
+                velocity.x = (velocity.x + LEFT_RIGHT_SPEED) / 2;
+            } else if (this.keys[LEFT_KEY]) {
                 velocity.x = (velocity.x - LEFT_RIGHT_SPEED) / 2;
             }
             Matter.Body.setVelocity(player, velocity)
         } else {
             var velocity = player.velocity;
-            if(this.keys[LEFT_KEY] && this.keys[RIGHT_KEY]) {
+            if (this.keys[LEFT_KEY] && this.keys[RIGHT_KEY]) {
                 velocity.x = velocity.x / 2;
-            } else if(this.keys[RIGHT_KEY]) {
+            } else if (this.keys[RIGHT_KEY]) {
                 velocity.x = (velocity.x * 2 + LEFT_RIGHT_SPEED) / 3;
-            } else if(this.keys[LEFT_KEY]) {
+            } else if (this.keys[LEFT_KEY]) {
                 velocity.x = (velocity.x * 2 - LEFT_RIGHT_SPEED) / 3;
             }
             Matter.Body.setVelocity(player, velocity)
@@ -282,16 +336,16 @@ class Game {
         var player = this.level.player.obj;
 
         var x = Math.round(player.position.x / TILE_SIZE);
-        var y = Math.ceil((player.position.y + PLAYER_HEIGHT) / TILE_SIZE );
-        var y1 = Math.ceil((player.position.y + PLAYER_HEIGHT / 2) / TILE_SIZE );
+        var y = Math.ceil((player.position.y + PLAYER_HEIGHT) / TILE_SIZE);
+        var y1 = Math.ceil((player.position.y + PLAYER_HEIGHT / 2) / TILE_SIZE);
 
         var map = this.level.map;
 
-        if( player.velocity.y > 0.02 ) {
+        if (player.velocity.y > 0.02) {
             return false;
         }
 
-        if( x < 0 || x >= map.width || y1 < 0 || y >= map.height || (map.structure[y][x] === -1 && map.structure[y1][x] === -1)) {
+        if (x < 0 || x >= map.width || y1 < 0 || y >= map.height || (map.structure[y][x] === -1 && map.structure[y1][x] === -1)) {
             return false;
         } else {
             return true;
@@ -309,24 +363,24 @@ class Game {
         var player = this.level.player.obj;
 
         this.endImage++;
-		if(this.start){ // show appear animation
-			this.ctx.drawImage(this.charAppear, 96*introFrames, 0, 96, 96, player.position.x-32, player.position.y-32, 96, 96);
-			if(this.endImage >= 6*ANIM_SPEED*2) {
+        if (this.start) { // show appear animation
+            this.ctx.drawImage(this.charAppear, 96 * introFrames, 0, 96, 96, player.position.x - 32, player.position.y - 32, 96, 96);
+            if (this.endImage >= 6 * ANIM_SPEED * 2) {
                 this.endImage = 0;
-				this.start = false;
-			}
+                this.start = false;
+            }
         }
-        else if(this.keys[RIGHT_KEY]) {  // running right
+        else if (this.keys[RIGHT_KEY]) {  // running right
             this.lastR = true;
-            this.ctx.drawImage(this.charRunRight, 32*curFrame, 0, 32, 32, player.position.x, player.position.y, 32, 32);
-            if(this.endImage >= 11*ANIM_SPEED){
+            this.ctx.drawImage(this.charRunRight, 32 * curFrame, 0, 32, 32, player.position.x, player.position.y, 32, 32);
+            if (this.endImage >= 11 * ANIM_SPEED) {
                 this.endImage = 0;
             }
         }
-        else if(this.keys[LEFT_KEY]) { // running left
+        else if (this.keys[LEFT_KEY]) { // running left
             this.lastR = false;
-            this.ctx.drawImage(this.charRunLeft, 32*curFrame, 0, 32, 32, player.position.x, player.position.y, 32, 32);
-            if(this.endImage >= 11*ANIM_SPEED){
+            this.ctx.drawImage(this.charRunLeft, 32 * curFrame, 0, 32, 32, player.position.x, player.position.y, 32, 32);
+            if (this.endImage >= 11 * ANIM_SPEED) {
                 this.endImage = 0;
             }
         }
@@ -346,34 +400,36 @@ class Game {
                 }
                 else {
                     this.ctx.drawImage(this.charFallLeft, 0, 0, 32, 32, player.position.x, player.position.y, 32, 32);
-                }            }
+                }
+            }
         }
-        else if(this.lastR) { // idle right
-            this.ctx.drawImage(this.charIdleRight, 32*curFrame, 0, 32, 32, player.position.x, player.position.y, 32, 32);
-            if(this.endImage >= 10*ANIM_SPEED){
+        else if (this.lastR) { // idle right
+            this.ctx.drawImage(this.charIdleRight, 32 * curFrame, 0, 32, 32, player.position.x, player.position.y, 32, 32);
+            if (this.endImage >= 10 * ANIM_SPEED) {
                 this.endImage = 0;
             }
         }
-        else if(!this.lastR){ // idle left
-            this.ctx.drawImage(this.charIdleLeft, 32*curFrame, 0, 32, 32, player.position.x, player.position.y, 32, 32);
-            if(this.endImage >= 10*ANIM_SPEED){
+        else if (!this.lastR) { // idle left
+            this.ctx.drawImage(this.charIdleLeft, 32 * curFrame, 0, 32, 32, player.position.x, player.position.y, 32, 32);
+            if (this.endImage >= 10 * ANIM_SPEED) {
                 this.endImage = 0;
             }
         }
     }
 
-    showChars(){
-        for(let i = 0; i < this.level.players.length; i++){
-            let player =  this.level.players[i];
-            this.ctx.drawImage(this.charImage, player.x, player.y);
+    showChars() {
+        for (let i = 0; i > this.level.players.length; i++) {
+            let player = this.level.players[i];
+            this.ctx.drawImage(this.charIdleLeft, player.x, player.y);
         }
     }
 
-    showObjects(){
-        for(let i = 0; i < this.level.objects.length; i++){
+    showObjects() {
+        for (let i = 0; i < this.level.objects.length; i++) {
             let object = this.level.objects[i];
-
-            this.ctx.drawImage(object.attr.image, object.position.x, object.position.y);
+            if (object.attr.visible == true) {
+                this.ctx.drawImage(this.objectImages[object.attr.src], object.position.x, object.position.y);
+            }
         }
     }
 
@@ -392,23 +448,23 @@ class Game {
 
     // Draws a tile from the tile set in a position
     drawTile(tileNum, x, y) {
-        var colNum = Math.floor(tileNum/(this.tilesetImage.width/16));
-        var rowNum = tileNum % (this.tilesetImage.width/16);
-        this.ctx.drawImage(this.tilesetImage, 16*rowNum, 16*colNum, 16, 16, x*16, y*16, 16, 16);
+        var colNum = Math.floor(tileNum / (this.tilesetImage.width / 16));
+        var rowNum = tileNum % (this.tilesetImage.width / 16);
+        this.ctx.drawImage(this.tilesetImage, 16 * rowNum, 16 * colNum, 16, 16, x * 16, y * 16, 16, 16);
     }
 
-    pull(mess){
+    pull(mess) {
         //unpack the objects here
         let objects = mess.data.objects;
         let players = mess.data.players;
 
-        for(let i = 0; i < players.length; i++){
+        for (let i = 0; i < players.length; i++) {
             let found = false;
-            for(let j = 0; j < this.level.players.length; j++){
-                if(players[i].id == conHandler.id){
+            for (let j = 0; j < this.level.players.length; j++) {
+                if (players[i].id == conHandler.id) {
                     found = true;
                     break;
-                } else if(players[i].id == this.level.players[j].id){
+                } else if (players[i].id == this.level.players[j].id) {
                     this.level.players[j].x = players[i].x;
                     this.level.players[j].y = players[i].y;
                     found = true;
@@ -416,8 +472,8 @@ class Game {
                 }
             }
 
-            if(!found && players[i].id != conHandler.id){
-                let player = {id: players[i].id};
+            if (!found && players[i].id != conHandler.id) {
+                let player = { id: players[i].id };
                 player.x = players[i].x;
                 player.y = players[i].y;
 
@@ -425,18 +481,35 @@ class Game {
             }
         }
 
+        for(let i = 0; i < objects.length; i++){
+            for(let j = 0; j < this.level.objects.length; j++){
+                if(objects[i].attr.name == this.level.objects[j].attr.name){
+                    this.level.objects[j].attr = objects[i].attr;
+                    this.level.objects[j].attr.image = new Image();
+                    this.level.objects[j].attr.image.src = this.level.objects[j].attr.src;
+                    this.level.objects[j].collisionFilter = objects[i].collisionFilter;
+                }
+            }
+        }
 
-        
         //Players contains the positions of every player, but ignore the player with an id == conHandler.id as this is you
     }
 
-    push(playerX, playerY){
-        
+    push(playerX, playerY) {
+        let objects = [];
+
+        for(let i = 0; i < this.objectUpdateList.data.length; i++){
+            let obj = this.objectUpdateList.pop();
+            objects.push({attr: obj.attr, collisionFilter: obj.collisionFilter});
+        }
+
         this.conn.send(JSON.stringify({
             purp: "update",
-            data: { roomCode: this.roomCode, objects: [], player: {id: conHandler.id, x: playerX, y: playerY} },
+            data: { roomCode: this.roomCode, objects: objects, player: { id: conHandler.id, x: playerX, y: playerY } },
             time: Date.now(),
             id: conHandler.id
         }));
+
+        this.objectUpdateList.data = [];
     }
 }
