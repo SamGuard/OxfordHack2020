@@ -281,7 +281,8 @@ class Game {
     isOnFloor() {
         var player = this.level.player.obj;
 
-        var x = Math.round(player.position.x / TILE_SIZE);
+        var x = Math.ceil(player.position.x / TILE_SIZE);
+        var x1 = Math.floor((player.position.x / TILE_SIZE));
         var y = Math.ceil((player.position.y + PLAYER_HEIGHT) / TILE_SIZE );
         var y1 = Math.ceil((player.position.y + PLAYER_HEIGHT / 2) / TILE_SIZE );
 
@@ -291,7 +292,8 @@ class Game {
             return false;
         }
 
-        if( x < 0 || x >= map.width || y1 < 0 || y >= map.height || (map.structure[y][x] === -1 && map.structure[y1][x] === -1)) {
+        if( x1 < 0 || x >= map.width || y1 < 0 || y >= map.height ||
+            (map.structure[y][x] === -1 && map.structure[y1][x] === -1 && map.structure[y][x1] === -1 && map.structure[y1][x1] === -1)) {
             return false;
         } else {
             return true;
