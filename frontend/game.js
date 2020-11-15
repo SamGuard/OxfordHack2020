@@ -6,11 +6,14 @@ const DOWN_KEY = 40;
 const PLAYER_WIDTH = 32;
 const PLAYER_HEIGHT = 32;
 
+const VERT_FILL_FACTOR = 0.75;
+const HORZ_FILL_FACTOR = 0.75;
+
 const TILE_SIZE = 16;
 
 const ANIM_SPEED = 2; // The bigger the number, the slower.
 
-class Set{
+class SetClass{
     constructor(){
         this.data = [];
     }
@@ -41,34 +44,31 @@ class Game {
         $('#gameCanvasContainer').show();// Game canvas goes in here
         $('#gameEndScreen').hide();
 
-        this.setupCanvas(window.innerWidth / 2, window.innerHeight / 2);
+        this.setupCanvas(window.innerWidth * HORZ_FILL_FACTOR, window.innerHeight * VERT_FILL_FACTOR);
         this.keys = [];
 
         this.isHost = isHost;
         this.conn = conn;
         this.roomCode = roomCode;
 
-        this.objectUpdateList = new Set();
-
+        this.objectUpdateList = new SetClass();
         this.winner = false;
     }
 
     // Function to start the game
-
-    isEqual(item1, item2) {
-        return item1.x1 == item2.x1 && item1.x2 == item2.x2 && item1.y1 == item2.y1 && item1.y2 == item2.y2;
-    }
-
     start(map) {
         this.endImage = 0; // image loop iterator
 
         this.lastR = true; // was the char last facing right?
         this.startAnim = true; // Have we played the appear animation?
         this.appear = 0; // appear loop iterator
+		this.disappear = false;//to play animation to remove character make true
+
+        this.isPlayerOnBox = false;
 
         // Start the game tick loop
         this.gameUpdateInterval = setInterval(function () {
-            conHandler.game.update();
+            conHandler.game.update()
         }, 20);
 
         // Imports level data
@@ -79,15 +79,14 @@ class Game {
         this.tilesetImage.src = "assets/" + this.level.map.tileset;
 
         // Import the character image
-        // TODO: Change this to a tile set and add character animation
 		this.charPlayer1 = new Image();
 		this.charPlayer1.src = "assets/chars/player1.png";
 		this.charPlayer2 = new Image();
-		this.charPlayer2.src = "assets/chars/player1.png";
+		this.charPlayer2.src = "assets/chars/player2.png";
 		this.charPlayer3 = new Image();
-		this.charPlayer3.src = "assets/chars/player1.png";
+		this.charPlayer3.src = "assets/chars/player3.png";
 		this.charPlayer4 = new Image();
-		this.charPlayer4.src = "assets/chars/player1.png";
+		this.charPlayer4.src = "assets/chars/player4.png";
 		this.charAppear = new Image();
         this.charAppear.src = "assets/chars/char-appear.png";
         this.charDisappear = new Image();
@@ -97,6 +96,8 @@ class Game {
         // Initialises the physics engine
         this.engine = Matter.Engine.create();
         this.world = this.engine.world;
+
+        this.platforms = [];
 
         // Add a rectangle to the physics engine for every tile in the map
         for (var col = 0; col < map.width; col++) {
@@ -108,7 +109,11 @@ class Game {
                         if ("boundingBox" in custom) {
                             var tempX = col * 16  + Matter.Vertices.centre(custom.boundingBox).x - 8;
                             var tempY = row * 16 + Matter.Vertices.centre(custom.boundingBox).y - 8;
-                            Matter.World.add(this.world, [Matter.Bodies.fromVertices(tempX, tempY, custom.boundingBox, { isStatic: true })]);
+                            var body = Matter.Bodies.fromVertices(tempX, tempY, custom.boundingBox, { isStatic: true });
+                            Matter.World.add(this.world, [body]);
+                            if("jumpThrough" in custom) {
+                                this.platforms.push(body);
+                            }
                             continue;
                         }
                     }
@@ -146,7 +151,6 @@ class Game {
         //other players
         this.level.players = [];
 
-
         //Objects
         let newObjects = [];
         this.objectImages = {};
@@ -170,11 +174,15 @@ class Game {
         this.level.objects = newObjects;
     }
 
+    isEqual(item1, item2) {
+        return item1.x1 == item2.x1 && item1.x2 == item2.x2 && item1.y1 == item2.y1 && item1.y2 == item2.y2;
+    }
+
     // Adds any event handlers needed
     setupEvents() {
         // On a resize change size of canvas and redo scale
         $(window).resize(function () {
-            conHandler.game.setupCanvas(window.innerWidth / 2, window.innerHeight / 2);
+            conHandler.game.setupCanvas(window.innerWidth * HORZ_FILL_FACTOR, window.innerHeight * VERT_FILL_FACTOR);
             // If map has been read in update map scaling
             if (conHandler.game.level != null) {
                 console.log("Changed size");
@@ -243,14 +251,16 @@ class Game {
         // Transform the game to fill the canvas vertically
         this.ctx.setTransform(this.scale, 0, 0, this.scale, 0.5 * this.ctx.canvas.width - this.scale * player.position.x, 0.5 * this.ctx.canvas.height - this.scale * player.position.y);
 
+        // Player control physics
         this.updatePlayerPhysics();
+        this.checkPlatforms();
 
         // Render tick
         this.showMap();
 
         this.showChars();
 
-		let OutputChar = this.showChar(this.charPlayer1, this.endImage, player.position.x, player.position.y, this.keys[LEFT_KEY], this.keys[RIGHT_KEY], this.lastR, this.startAnim, this.isOnFloor(), player.velocity.y);
+		let OutputChar = this.showChar(this.charPlayer1, this.endImage, player.position.x, player.position.y, this.keys[LEFT_KEY], this.keys[RIGHT_KEY], this.lastR, this.startAnim, this.isOnFloor(), player.velocity.y, this.disappear);
 		this.endImage = OutputChar[0];
 		this.lastR = OutputChar[1];
 		this.startAnim = OutputChar[2];
@@ -360,6 +370,21 @@ class Game {
 
         var map = this.level.map;
 
+        let objects = this.level.objects;
+        for(var i in objects) {
+            if((player.bounds.max.x >= objects[i].bounds.min.x && player.bounds.max.x <= objects[i].bounds.max.x ) ||
+                (player.bounds.min.x >= objects[i].bounds.min.x && player.bounds.min.x <= objects[i].bounds.max.x ) ||
+                (player.bounds.min.x <= objects[i].bounds.min.x && player.bounds.max.x >= objects[i].bounds.max.x ))
+            {
+                if(player.bounds.max.y > objects[i].bounds.min.y - 10 && player.bounds.max.y < objects[i].bounds.min.y + 2) {
+                    if(objects[i].attr !== undefined && objects[i].attr.actions.door == true && objects[i].attr.visible === true) {
+                        return true;
+                    }
+                }
+
+            }
+        }
+
         if (player.velocity.y > 0.02) {
             return false;
         }
@@ -372,12 +397,23 @@ class Game {
         }
     }
 
+    checkPlatforms() {
+        // var doPlatformsExist = (this.level.player.obj.velocity !== null && this.level.player.obj.velocity.y > -0.05);
+        for(var plat in this.platforms) {
+            if(this.level.player.obj.bounds.max.y - 5 < this.platforms[plat].bounds.min.y) {
+                this.platforms[plat].collisionFilter.category = 1;
+            } else {
+                this.platforms[plat].collisionFilter.category = 0;
+            }
+        }
+    }
+
     // -----------------------
     // *** RENDERING STUFF ***
     // -----------------------
 
     // Renders the player icon
-    showChar(playerImage, endImage, xPos, yPos, moveL, moveR, lastR, start, onFloor, yVel) {
+    showChar(playerImage, endImage, xPos, yPos, moveL, moveR, lastR, start, onFloor, yVel, end) {
         xPos -= Matter.Vertices.centre(this.level.player.boundingBox).x;
         yPos -= Matter.Vertices.centre(this.level.player.boundingBox).y;
         var curFrame = Math.floor(endImage / ANIM_SPEED);
@@ -390,14 +426,21 @@ class Game {
 				start = false;
 			}
         }
-        else if(moveR) {  // running right
+		else if(end){ // show Disappear animation 
+			this.ctx.drawImage(this.charDisappear, 96*introFrames, 0, 96, 96, xPos-32, yPos-32, 96, 96);
+			if(endImage >= 6*ANIM_SPEED*2) {
+                endImage = 0;
+				end = false;
+			}
+        }
+        else if(moveR && onFloor) {  // running right
             lastR = true;
             this.ctx.drawImage(playerImage, 32*curFrame, 32, 32, 32, xPos, yPos, 32, 32);
             if(endImage >= 11*ANIM_SPEED){
                 endImage = 0;
             }
         }
-        else if(moveL) { // running left
+        else if(moveL && onFloor) { // running left
             lastR = false;
             this.ctx.drawImage(playerImage, 32*curFrame, 0, 32, 32, xPos, yPos, 32, 32);
             if(endImage >= 11*ANIM_SPEED){
@@ -415,6 +458,13 @@ class Game {
                 }
             }
             else { // falling
+				if(moveR){
+					lastR = true;
+				}
+				else if(moveL){
+					lastR = false;
+				}
+				
                 if (lastR) {
                     this.ctx.drawImage(playerImage, 0, 160, 32, 32, xPos, yPos, 32, 32);
                 }
@@ -453,10 +503,18 @@ class Game {
                 moveL = false;
                 moveR = true;
             }
+			if(i == 0){
+				var img = this.charPlayer2;
+			}
+			else if(i == 1){
+				var img = this.charPlayer3;
+			}else{
+				var img = this.charPlayer4;
+			}
 
-            let OutputChar = this.showChar(this.charPlayer1, player.endImage, player.x,
+            let OutputChar = this.showChar(img, player.endImage, player.x,
                  player.y, moveL, moveR,
-                  player.lastR, player.start, true, player.vy);
+                  player.lastR, player.start, true, player.vy, false);//to run disappear set last value to true
 		    player.endImage = OutputChar[0];
 		    player.lastR = OutputChar[1];
 		    player.start = OutputChar[2];
