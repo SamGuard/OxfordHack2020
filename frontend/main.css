@@ -1,3 +1,7 @@
+@font-face {
+  font-family: the8bit;
+  src: url(assets/font/SuperLegendBoy-4w8Y.ttf);
+}
 .GridContainer {
   display: inline-grid;
   grid-template-columns: auto auto auto;
@@ -12,7 +16,7 @@
 }
 
 body {
-  font-family: 'Exo 2';
+  font-family: the8bit;
   background-color: #F3F5F6;
 }
 
@@ -100,7 +104,7 @@ body {
   border: none;
   cursor: pointer;
   line-height: 1.5;
-  font: 700 1.2rem "Exo 2";
+  font: 700 1.2rem the8bit;
   text-transform: uppercase;
   padding: 1em 2em;
   letter-spacing: 0.05rem;
