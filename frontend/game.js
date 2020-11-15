@@ -476,14 +476,14 @@ class Game {
 				start = false;
 			}
         }
-        else if(moveR) {  // running right
+        else if(moveR && onFloor) {  // running right
             lastR = true;
             this.ctx.drawImage(playerImage, 32*curFrame, 32, 32, 32, xPos, yPos, 32, 32);
             if(endImage >= 11*ANIM_SPEED){
                 endImage = 0;
             }
         }
-        else if(moveL) { // running left
+        else if(moveL && onFloor) { // running left
             lastR = false;
             this.ctx.drawImage(playerImage, 32*curFrame, 0, 32, 32, xPos, yPos, 32, 32);
             if(endImage >= 11*ANIM_SPEED){
@@ -501,6 +501,13 @@ class Game {
                 }
             }
             else { // falling
+				if(moveR){
+					lastR = true;
+				}
+				else if(moveL){
+					lastR = false;
+				}
+				
                 if (lastR) {
                     this.ctx.drawImage(playerImage, 0, 160, 32, 32, xPos, yPos, 32, 32);
                 }
