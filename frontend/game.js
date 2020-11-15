@@ -52,6 +52,7 @@ class Game {
         this.roomCode = roomCode;
 
         this.objectUpdateList = new SetClass();
+        this.winner = false;
     }
 
     // Function to start the game
@@ -162,7 +163,9 @@ class Game {
             if (this.level.objects[i].actions.button == true) {
                 newObjects[i] = Matter.Bodies.fromVertices(this.level.objects[i].x * 16, this.level.objects[i].y * 16, this.level.objects[i].boundingBox, { isStatic: true, isSensor: true });
             } else if (this.level.objects[i].actions.door == true) {
-                newObjects[i] = Matter.Bodies.fromVertices(this.level.objects[i].x * 16, this.level.objects[i].y * 16, this.level.objects[i].boundingBox, { isStatic: true });
+                newObjects[i] = Matter.Bodies.fromVertices(this.level.objects[i].x * 16 - 8, this.level.objects[i].y * 16 - 8, this.level.objects[i].boundingBox, { isStatic: true });
+            }   else if (this.level.objects[i].actions.end == true) {
+                newObjects[i] = Matter.Bodies.fromVertices(this.level.objects[i].x * 16 - 8, this.level.objects[i].y * 16 - 8, this.level.objects[i].boundingBox, { isStatic: true, isSensor: true });
             }
             newObjects[i].attr = this.level.objects[i];
             Matter.World.add(this.world, [newObjects[i]]);
@@ -201,10 +204,21 @@ class Game {
 
             for (var i = 0, j = pairs.length; i != j; ++i) {
                 var pair = pairs[i];
-                if (pair.bodyA.attr != undefined && pair.bodyA.attr.actions.button == true) {
-                    conHandler.game.doButtonThings(pair.bodyA);
-                } else if (pair.bodyB.attr != undefined && pair.bodyB.attr.actions.button == true) {
-                    conHandler.game.doButtonThings(pair.bodyB);
+                if(pair.bodyA.attr != undefined){
+                    if (pair.bodyA.attr.actions.button == true) {
+                        conHandler.game.doButtonThings(pair.bodyA);
+                    }else if(pair.bodyA.attr.actions.end == true){
+                        conHandler.game.winner = true;
+                        conHandler.game.endGame();
+                    }
+                }
+                if(pair.bodyB.attr != undefined){
+                    if (pair.bodyB.attr.actions.button == true) {
+                        conHandler.game.doButtonThings(pair.bodyB);
+                    }else if(pair.bodyB.attr.actions.end == true){
+                        conHandler.game.winner = true;
+                        conHandler.game.endGame();
+                    }
                 }
             }
         });
@@ -542,6 +556,23 @@ class Game {
         var colNum = Math.floor(tileNum / (this.tilesetImage.width / 16));
         var rowNum = tileNum % (this.tilesetImage.width / 16);
         this.ctx.drawImage(this.tilesetImage, 16 * rowNum, 16 * colNum, 16, 16, x * 16 - 8, y * 16 - 8, 16, 16);
+    }
+
+    endGame(){
+        if(this.winner == true){
+            this.conn.send(JSON.stringify({
+                purp: "end",
+                data: { roomCode: this.roomCode},
+                time: Date.now(),
+                id: conHandler.id
+            }));
+            $('#WinOrLooseText').html("You Win");
+        }else{
+            $('#WinOrLooseText').html("You Loose");
+        }
+        $('#gameCanvasContainer').hide();
+        $('#gameEndScore').html(`25`);
+        $('#gameEndScreen').show();
     }
 
     pull(mess) {
