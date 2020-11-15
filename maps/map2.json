@@ -79,7 +79,7 @@
     "objects": [
         {
             "name": "end",
-            "src": "End (idle).png",
+            "src": "End (Idle).png",
             "x": 97,
             "y": 40,
             "visible": true,

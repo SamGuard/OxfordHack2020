@@ -339,7 +339,7 @@ class Game {
         this.checkPlatforms();
 
         // Render tick
-        this.showBackground(this.backgroundTileNum);
+        //this.showBackground(this.backgroundTileNum);
         this.showMap();
         this.showObjects();
 
