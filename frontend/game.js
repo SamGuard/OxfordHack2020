@@ -125,7 +125,7 @@ class Game {
                             continue;
                         }
                     }
-                    Matter.World.add(this.world, [Matter.Bodies.rectangle(col*16, row*16, 16, 16, { isStatic: true })]);
+                    Matter.World.add(this.world, [Matter.Bodies.rectangle(col*16, row*16, 16, 16, { isStatic: true, friction: 0})]);
                 }
             }
         }
@@ -172,8 +172,10 @@ class Game {
                 newObjects[i] = Matter.Bodies.fromVertices(this.level.objects[i].x * 16, this.level.objects[i].y * 16, this.level.objects[i].boundingBox, { isStatic: true, isSensor: true });
             } else if (this.level.objects[i].actions.door == true) {
                 newObjects[i] = Matter.Bodies.fromVertices(this.level.objects[i].x * 16 - 8, this.level.objects[i].y * 16 - 8, this.level.objects[i].boundingBox, { isStatic: true });
-            }   else if (this.level.objects[i].actions.end == true) {
+            } else if (this.level.objects[i].actions.end == true) {
                 newObjects[i] = Matter.Bodies.fromVertices(this.level.objects[i].x * 16 - 8, this.level.objects[i].y * 16 - 8, this.level.objects[i].boundingBox, { isStatic: true, isSensor: true });
+            } else if (this.level.objects[i].actions.kills == true) {
+                newObjects[i] = Matter.Bodies.fromVertices(this.level.objects[i].x * 16 - 8, this.level.objects[i].y * 16 - 8, this.level.objects[i].boundingBox, { isStatic: true, isSensor: true, kills: true });
             }
             newObjects[i].attr = this.level.objects[i];
             Matter.World.add(this.world, [newObjects[i]]);
@@ -227,6 +229,8 @@ class Game {
                     }else if(pair.bodyA.attr.actions.end == true){
                         conHandler.game.winner = true;
                         conHandler.game.endGame();
+                    } else if(pair.bodyA.attr.actions.kills == true) {
+                        conHandler.game.alive = false;
                     }
                 }
                 if(pair.bodyB.attr != undefined){
@@ -235,6 +239,8 @@ class Game {
                     }else if(pair.bodyB.attr.actions.end == true){
                         conHandler.game.winner = true;
                         conHandler.game.endGame();
+                    } else if(pair.bodyB.attr.actions.kills == true) {
+                        conHandler.game.alive = false;
                     }
                 }
             }
@@ -340,7 +346,7 @@ class Game {
         var player = this.level.player.obj;
         player.mass = 100;
         player.frictionAir = 0.01;
-        player.friction = 0.02;
+        player.friction = 0.0;
     }
 
     // Player physics update
