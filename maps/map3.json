@@ -35,8 +35,8 @@
                 "boundingBox": [{"x": 0, "y": 0}, {"x": 16, "y": 0}, {"x": 16, "y": 5}, {"x": 0, "y": 5}]
             }
         },
-        "width": 20,
-        "height": 10
+        "width": 100,
+        "height": 20
     },
     "player": {
         "startPositions": [
