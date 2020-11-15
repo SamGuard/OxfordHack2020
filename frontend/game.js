@@ -200,7 +200,7 @@ class Game {
                     if (pair.bodyA.attr.actions.button == true) {
                         conHandler.game.doButtonThings(pair.bodyA);
                     }else if(pair.bodyA.attr.actions.end == true){
-                        this.winner = true;
+                        conHandler.game.winner = true;
                         conHandler.game.endGame();
                     }
                 }
@@ -208,7 +208,7 @@ class Game {
                     if (pair.bodyB.attr.actions.button == true) {
                         conHandler.game.doButtonThings(pair.bodyB);
                     }else if(pair.bodyB.attr.actions.end == true){
-                        this.winner = true;
+                        conHandler.game.winner = true;
                         conHandler.game.endGame();
                     }
                 }
@@ -508,6 +508,9 @@ class Game {
                 time: Date.now(),
                 id: conHandler.id
             }));
+            $('#WinOrLooseText').html("You Win");
+        }else{
+            $('#WinOrLooseText').html("You Loose");
         }
         $('#gameCanvasContainer').hide();
         $('#gameEndScore').html(`25`);
