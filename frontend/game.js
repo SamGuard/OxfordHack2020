@@ -124,6 +124,23 @@ class Game {
 
         //other players
         this.level.players = [];
+
+
+        //Objects
+        let newObjects = [];
+        for(let i = 0; i < this.level.objects.length; i++){
+            newObjects.push({});
+
+            this.level.objects[i].image = new Image();
+            this.level.objects[i].image.src = "assets/" + this.level.objects[i].src;
+            
+            newObjects[i] = Matter.Bodies.fromVertices(this.level.objects[i].x*16-8, this.level.objects[i].y*16-8, this.level.objects[i].boundingBox, {isStatic: true, isSensor: true});
+            newObjects[i].attr = this.level.objects[i];
+
+            Matter.World.add(this.world, [newObjects[i]]);
+        }
+
+        this.level.objects = newObjects;
     }
 
     // Adds any event handlers needed
@@ -145,6 +162,19 @@ class Game {
 
         $(window).keyup(function(e) {
             conHandler.game.keys[e.keyCode] = false;
+        });
+
+        Matter.Events.on(this.engine, 'collisionStart', function(event) {
+            var pairs = event.pairs;
+            
+            for (var i = 0, j = pairs.length; i != j; ++i) {
+                var pair = pairs[i];
+                if (pair.bodyA.attr != undefined && pair.bodyA.attr.actions.toggle == true) {
+                    conHandler.game.doButtonThings(pair.bodyA);
+                } else if (pair.bodyB.attr != undefined && pair.bodyB.attr.actions.toggle == true) {
+                    conHandler.game.doButtonThings(pair.bodyB);
+                }
+            }
         });
     }
 
@@ -179,13 +209,24 @@ class Game {
 
         // Render tick
         this.showMap();
+        
         this.showChars();
 
         this.showChar();
+        this.showObjects();
 
         // Physics tick
         Matter.Engine.update(this.engine, 20);
-        this.push({}, this.level.player.obj.position.x, this.level.player.obj.position.y);
+        this.push(this.level.player.obj.position.x, this.level.player.obj.position.y);
+    }
+
+    doButtonThings(obj){
+        if(obj.attr.state == 0){
+            obj.attr.state = 1;
+        }else{
+            obj.attr.state = 0;
+        }
+        console.log(obj.attr.name, obj.attr.state);
     }
 
     // -----------------------
@@ -328,6 +369,14 @@ class Game {
         }
     }
 
+    showObjects(){
+        for(let i = 0; i < this.level.objects.length; i++){
+            let object = this.level.objects[i];
+
+            this.ctx.drawImage(object.attr.image, object.position.x, object.position.y);
+        }
+    }
+
     // Renders the tiles
     showMap() {
         var map = this.level.map;
@@ -376,13 +425,16 @@ class Game {
             }
         }
 
+
+        
         //Players contains the positions of every player, but ignore the player with an id == conHandler.id as this is you
     }
 
-    push(objects, playerX, playerY){
+    push(playerX, playerY){
+        
         this.conn.send(JSON.stringify({
             purp: "update",
-            data: { roomCode: this.roomCode, objects: objects, player: {id: conHandler.id, x: playerX, y: playerY} },
+            data: { roomCode: this.roomCode, objects: [], player: {id: conHandler.id, x: playerX, y: playerY} },
             time: Date.now(),
             id: conHandler.id
         }));
