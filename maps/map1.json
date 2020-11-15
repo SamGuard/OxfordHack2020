@@ -165,8 +165,8 @@
         {
             "name": "apple1",
             "src": "Apple.png",
-            "x": 7,
-            "y": -3,
+            "x": 5,
+            "y": 1,
             "visible": true,
             "boundingBox": [{"x": 0, "y": 0}, {"x": 0, "y": 14}, {"x": 12, "y": 14}, {"x": 12, "y": 0}],
             "actions": {
