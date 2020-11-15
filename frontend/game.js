@@ -54,23 +54,26 @@ class Game {
 
         // Import the character image
         // TODO: Change this to a tile set and add character animation
-        this.charImage = new Image();
-        this.charImage.src = "assets/mydude.png";
 		this.charRunRight = new Image();
-		this.charRunRight.src = "assets/Run (32x32).png";
+		this.charRunRight.src = "assets/chars/char1-runRight.png";
 		this.charRunLeft = new Image();
-		this.charRunLeft.src = "assets/runLeft.png";
+		this.charRunLeft.src = "assets/chars/char1-runLeft.png";
 		this.charIdleRight = new Image();
-		this.charIdleRight.src = "assets/Idle (32x32).png";
+		this.charIdleRight.src = "assets/chars/char1-idleRight.png";
 		this.charIdleLeft = new Image();
-        this.charIdleLeft.src = "assets/idelLeft.png";
-        this.charJumping = new Image();
-        this.charJumping.src = "assets/Jump (32x32).png";
-        this.charFalling = new Image();
-		this.charFalling.src = "assets/Fall (32x32).png";
+        this.charIdleLeft.src = "assets/chars/char1-idleLeft.png";
+        this.charJumpLeft = new Image();
+        this.charJumpLeft.src = "assets/chars/char1-jumpLeft.png";
+        this.charJumpRight = new Image();
+        this.charJumpRight.src = "assets/chars/char1-jumpRight.png";
+        this.charFallLeft = new Image();
+		this.charFallLeft.src = "assets/chars/char1-fallLeft.png";
+        this.charFallRight = new Image();
+		this.charFallRight.src = "assets/chars/char1-fallRight.png";
 		this.charAppear = new Image();
-		this.charAppear.src = "assets/Appearing (96x96).png";
-
+        this.charAppear.src = "assets/chars/char-appear.png";
+        this.charDisappear = new Image();
+        this.charDisappear.src = "assets/chars/char-disappear.png";
         var map = this.level.map;
 
         // Initialises the physics engine
@@ -170,7 +173,7 @@ class Game {
         this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
 
         // Transform the game to fill the canvas vertically
-        this.ctx.setTransform(this.scale, 0, 0, this.scale, 0.5*this.ctx.canvas.width - this.scale * player.position.x, 0);
+        this.ctx.setTransform(this.scale, 0, 0, this.scale, 0.5*this.ctx.canvas.width - this.scale * player.position.x, 0.5*this.ctx.canvas.height - this.scale * player.position.y);
 
         this.updatePlayerPhysics();
 
@@ -289,11 +292,20 @@ class Game {
         else if (!this.isOnFloor()) {
             this.endImage--;
             if (player.velocity.y < 0) { // jumping
-                this.ctx.drawImage(this.charJumping, 0, 0, 32, 32, player.position.x, player.position.y, 32, 32);
+                if (this.lastR) {
+                    this.ctx.drawImage(this.charJumpRight, 0, 0, 32, 32, player.position.x, player.position.y, 32, 32);
+                }
+                else {
+                    this.ctx.drawImage(this.charJumpLeft, 0, 0, 32, 32, player.position.x, player.position.y, 32, 32);
+                }
             }
             else { // falling
-                this.ctx.drawImage(this.charFalling, 0, 0, 32, 32, player.position.x, player.position.y, 32, 32);
-            }
+                if (this.lastR) {
+                    this.ctx.drawImage(this.charFallRight, 0, 0, 32, 32, player.position.x, player.position.y, 32, 32);
+                }
+                else {
+                    this.ctx.drawImage(this.charFallLeft, 0, 0, 32, 32, player.position.x, player.position.y, 32, 32);
+                }            }
         }
         else if(this.lastR) { // idle right
             this.ctx.drawImage(this.charIdleRight, 32*curFrame, 0, 32, 32, player.position.x, player.position.y, 32, 32);
