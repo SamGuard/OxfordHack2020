@@ -59,6 +59,8 @@ class Game {
         this.startAnim = true; // Have we played the appear animation?
         this.appear = 0; // appear loop iterator
 
+        this.isPlayerOnBox = false;
+
         // Start the game tick loop
         this.gameUpdateInterval = setInterval(function () {
             conHandler.game.update()
@@ -89,6 +91,8 @@ class Game {
         // Initialises the physics engine
         this.engine = Matter.Engine.create();
         this.world = this.engine.world;
+
+        this.platforms = [];
 
         // Add a rectangle to the physics engine for every tile in the map
         for (var col = 0; col < map.width; col++) {
@@ -348,6 +352,21 @@ class Game {
 
         var map = this.level.map;
 
+        let objects = this.level.objects;
+        for(var i in objects) {
+            if((player.bounds.max.x >= objects[i].bounds.min.x && player.bounds.max.x <= objects[i].bounds.max.x ) ||
+                (player.bounds.min.x >= objects[i].bounds.min.x && player.bounds.min.x <= objects[i].bounds.max.x ) ||
+                (player.bounds.min.x <= objects[i].bounds.min.x && player.bounds.max.x >= objects[i].bounds.max.x ))
+            {
+                if(player.bounds.max.y > objects[i].bounds.min.y - 10 && player.bounds.max.y < objects[i].bounds.min.y + 2) {
+                    if(objects[i].attr !== undefined && objects[i].attr.actions.door == true && objects[i].attr.visible === true) {
+                        return true;
+                    }
+                }
+
+            }
+        }
+
         if (player.velocity.y > 0.02) {
             return false;
         }
@@ -361,10 +380,12 @@ class Game {
     }
 
     checkPlatforms() {
-        var doPlatformsExist = this.isOnFloor() || this.level.player.obj.velocity.y > 0.02;
+        // var doPlatformsExist = (this.level.player.obj.velocity !== null && this.level.player.obj.velocity.y > -0.05);
         for(var plat in this.platforms) {
-            if(doPlatformsExist) {
-                this.platforms[plat].collisionFilter = -1;
+            if(this.level.player.obj.bounds.max.y - 5 < this.platforms[plat].bounds.min.y) {
+                this.platforms[plat].collisionFilter.category = 1;
+            } else {
+                this.platforms[plat].collisionFilter.category = 0;
             }
         }
     }
