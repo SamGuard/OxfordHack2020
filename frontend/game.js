@@ -38,11 +38,11 @@ class Game {
     // *** GAME SETUP ***
     // ------------------
 
-    constructor(isHost, conn, roomCode, playerNumber) {
-        this.setup(isHost, conn, roomCode, playerNumber);
+    constructor(isHost, conn, roomCode, playerNumber, playerName) {
+        this.setup(isHost, conn, roomCode, playerNumber, playerName);
     }
 
-    setup(isHost, conn, roomCode, playerNumber){
+    setup(isHost, conn, roomCode, playerNumber, playerName){
         //make a game canvas using jquery in the game canvas container.
         $("#gameMenu").hide();
         $('#gameCanvasContainer').show();// Game canvas goes in here
@@ -54,6 +54,8 @@ class Game {
         this.isHost = isHost;
         this.conn = conn;
         this.roomCode = roomCode;
+        this.playerName = playerName;
+
 
         this.objectUpdateList = new SetClass();
         
@@ -66,7 +68,7 @@ class Game {
         this.sentMessage = false; //used in endGame to see if the winner has sent the message to the server
         this.playerNumber = playerNumber;
         this.skinNumber = this.playerNumber;
-        this.playerName = "PLAYER_" + this.playerNumber.toString();
+        //this.playerName = "PLAYER_" + this.playerNumber.toString();
     }
 
     reset(){
