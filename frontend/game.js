@@ -74,6 +74,8 @@ class Game {
         this.disappear = false;//to play animation to remove character make true
         this.end = false;
 
+        this.animCounter = 0; // Alfie's anim counter
+
         this.isPlayerOnBox = false;
 
         // Start the game tick loop
@@ -133,7 +135,7 @@ class Game {
                             continue;
                         }
                     }
-                    Matter.World.add(this.world, [Matter.Bodies.rectangle(col*16, row*16, 16, 16, { isStatic: true })]);
+                    Matter.World.add(this.world, [Matter.Bodies.rectangle(col*16, row*16, 16, 16, { isStatic: true, friction: 0})]);
                 }
             }
         }
@@ -173,8 +175,16 @@ class Game {
         for (let i = 0; i < this.level.objects.length; i++) {
             newObjects.push({});
 
-            this.objectImages[this.level.objects[i].src] = new Image();
-            this.objectImages[this.level.objects[i].src].src = "assets/" + this.level.objects[i].src;
+            if(!this.level.objects[i].animated || this.level.objects[i].animated == undefined) {
+                this.objectImages[this.level.objects[i].src] = new Image();
+                this.objectImages[this.level.objects[i].src].src = "assets/" + this.level.objects[i].src;
+            } else {
+                for (const state in this.level.objects[i].states) {
+                    this.objectImages[this.level.objects[i].states[state].src] = new Image();
+                    this.objectImages[this.level.objects[i].states[state].src].src = "assets/" + this.level.objects[i].states[state].src;
+
+                }
+            }
 
             if (this.level.objects[i].actions.button == true) {
                 newObjects[i] = Matter.Bodies.fromVertices(this.level.objects[i].x * 16, this.level.objects[i].y * 16, this.level.objects[i].boundingBox, { isStatic: true, isSensor: true });
@@ -184,6 +194,10 @@ class Game {
                 newObjects[i] = Matter.Bodies.fromVertices(this.level.objects[i].x * 16 - 8, this.level.objects[i].y * 16 - 8, this.level.objects[i].boundingBox, { isStatic: true, isSensor: true });
             } else if (this.level.objects[i].actions.collectable == true) {
                 newObjects[i] = Matter.Bodies.fromVertices(this.level.objects[i].x * 16 - 8, this.level.objects[i].y * 16 - 8, this.level.objects[i].boundingBox, { isStatic: true, isSensor: true });
+            } else if (this.level.objects[i].actions.kills == true) {
+                newObjects[i] = Matter.Bodies.fromVertices(this.level.objects[i].x * 16, this.level.objects[i].y * 16, this.level.objects[i].boundingBox, { isStatic: true, isSensor: true});
+            } else if (this.level.objects[i].actions.firelighter == true) {
+                newObjects[i] = Matter.Bodies.fromVertices(this.level.objects[i].x * 16, this.level.objects[i].y * 16, this.level.objects[i].boundingBox, { isStatic: true});
             }
             newObjects[i].attr = this.level.objects[i];
             Matter.World.add(this.world, [newObjects[i]]);
@@ -240,6 +254,14 @@ class Game {
                             conHandler.game.endGame();
                         }else if(pair[p].attr.actions.collectable == true){
                             conHandler.game.getObject(pair[p].attr);
+                        } else if(pair[p].attr.actions.kills == true) {
+                            conHandler.game.alive = false;
+                        } else if(pair[p].attr.actions.firelighter == true) {
+                            if (pair[p].attr.state == "on") {
+                                conHandler.game.alive = false;
+                            } else if (pair[p].attr.state == "off") {
+                                pair[p].attr.state = "hit";
+                            }
                         }
                     }
                 }
@@ -266,6 +288,8 @@ class Game {
     // This runs every game tick
     update() {
         var player = this.level.player.obj;
+
+        this.animCounter += 1;
 
         // Clear the canvas
         this.ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -362,7 +386,7 @@ class Game {
         var player = this.level.player.obj;
         player.mass = 100;
         player.frictionAir = 0.01;
-        player.friction = 0.02;
+        player.friction = 0.0;
     }
 
     // Player physics update
@@ -590,9 +614,35 @@ class Game {
         for (let i = 0; i < this.level.objects.length; i++) {
             let obj = this.level.objects[i];
             if (obj.attr.visible == true) {
-                var tempX = obj.position.x - Matter.Vertices.centre(obj.attr.boundingBox).x;
-                var tempY = obj.position.y - Matter.Vertices.centre(obj.attr.boundingBox).y;
-                this.ctx.drawImage(this.objectImages[obj.attr.src], tempX, tempY);
+                if(obj.attr.animated) {
+                    var tempX = obj.position.x - Matter.Vertices.centre(obj.attr.boundingBox).x;
+                    var tempY = obj.position.y - Matter.Vertices.centre(obj.attr.boundingBox).y;
+
+                    var ticks = Math.floor(this.animCounter / obj.attr.speed);
+                    var state = obj.attr.state;
+                    var frame = ticks % obj.attr.states[state].len;
+
+                    var image = this.objectImages[obj.attr.states[state].src]
+                    //this.ctx.drawImage(image, tempX, tempY);
+
+                    if(!obj.attr.states[state].rep) {
+                        if(obj.attr.states[state].counter === 0) {
+                            obj.attr.states[state].counter = this.animCounter;
+                        }
+                        frame = Math.floor((this.animCounter - obj.attr.states[state].counter ) / obj.attr.speed);
+
+                        if(frame >= obj.attr.states[state].len) {
+                            obj.attr.state = obj.attr.states[state].next;
+                        }
+                    }
+
+                    this.ctx.drawImage(image, frame * obj.attr.sizeX, 0, obj.attr.sizeX, obj.attr.sizeY,
+                        tempX, tempY, obj.attr.sizeX, obj.attr.sizeY);
+                } else {
+                    var tempX = obj.position.x - Matter.Vertices.centre(obj.attr.boundingBox).x;
+                    var tempY = obj.position.y - Matter.Vertices.centre(obj.attr.boundingBox).y;
+                    this.ctx.drawImage(this.objectImages[obj.attr.src], tempX, tempY);
+                }
             }
         }
     }
