@@ -182,13 +182,6 @@ class Game {
         // Sets the scale for the canvas (used in the renderer)
         this.scale = (this.ctx.canvas.height) / ((VERTICAL_FILL) * 16);
 
-        var render = Matter.Render.create({
-            canvas: $("#gameCanvas2")[0],
-            engine: this.engine
-        });
-
-        Matter.Render.run(render);
-
         //other players
         this.level.players = [];
 
