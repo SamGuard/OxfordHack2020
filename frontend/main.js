@@ -74,6 +74,7 @@ class ConnectionHandler {
         console.log("Start game");
         $('#createGamePage').hide();
         $('#homePage').hide();
+        $('#waitingRoom').hide();
 
         $('#gamePage').show();
         this.gameRunning = true;
@@ -125,6 +126,12 @@ conHandler.socket.onmessage = function (event) {
         conHandler.startGame(data.data.map);
     } else if(data.purp == "end"){
         conHandler.game.endGame();
+    } else if(data.purp == "updateWaitingRoom"){
+        if(conHandler.isHost == true){
+            $('#createGamePlayers').html(`Players: ${data.data.numPlayers}`);
+        }else{
+            $('#waitingRoomPlayers').html(`Players: ${data.data.numPlayers}`);
+        }
     } else {
         console.log("Error purpose not recognise");
     }
@@ -150,10 +157,18 @@ $(document).ready(function () {
     $('#gamePage').hide();
     $('#helpScreen').hide();
     $('#createGamePage').hide();
+    $('#waitingRoom').hide();
 
     $('#joinGameButton').click(function () {
         conHandler.roomCode = $('#codeInput').val().toLowerCase();
         conHandler.joinRoom();
+        $('#homePage').hide();
+        $('#gamePage').hide();
+        $('#helpScreen').hide();
+        $('#createGamePage').hide();
+        $('#waitingRoom').show();
+
+        $('#waitingRoomPin').html(conHandler.roomCode);
     });
 
     $('#createGameButton').click(function () {
@@ -162,6 +177,7 @@ $(document).ready(function () {
         $('#helpScreen').hide();
         $('#createGamePage').show();
         conHandler.createRoom();
+        $('#createGamePlayers').html(`Players: ${1}`);
     });
 
     $('#createBackButton').click(function () {
