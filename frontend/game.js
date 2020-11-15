@@ -505,7 +505,7 @@ class Game {
 			*/
             let OutputChar = this.showChar(img, player.endImage, player.x,
                  player.y, moveL, moveR,
-                  player.lastR, player.start, true, player.vy, false);//to run disappear set last value to true
+                  player.lastR, player.start, (Math.abs(player.vy) > 0.01) ? false : true, player.vy, false);//to run disappear set last value to true
 		    player.endImage = OutputChar[0];
 		    player.lastR = OutputChar[1];
 		    player.start = OutputChar[2];
