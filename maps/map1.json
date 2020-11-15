@@ -49,5 +49,41 @@
         "boundingBox": [{"x": 5, "y": 0}, {"x": 5, "y": 32}, {"x": 30, "y": 32}, {"x": 30, "y": 0}]
     },
     "objects": [
+        {
+            "name": "box",
+            "src": "box.png",
+            "x": 7,
+            "y": 5,
+            "boundingBox": [{"x": 4, "y": 6}, {"x": 4, "y": 22}, {"x": 24, "y": 22}, {"x": 24, "y": 6}],
+            "actions": {
+                "moveable": true,
+                "toggle": true
+            },
+            "state": 0
+        },
+        {
+            "name": "box1",
+            "src": "box.png",
+            "x": 3,
+            "y": 5,
+            "boundingBox": [{"x": 4, "y": 6}, {"x": 4, "y": 22}, {"x": 24, "y": 22}, {"x": 24, "y": 6}],
+            "actions": {
+                "moveable": true,
+                "toggle": true
+            },
+            "state": 0
+        },
+        {
+            "name": "box2",
+            "src": "box.png",
+            "x": 9,
+            "y": 5,
+            "boundingBox": [{"x": 4, "y": 6}, {"x": 4, "y": 22}, {"x": 24, "y": 22}, {"x": 24, "y": 6}],
+            "actions": {
+                "moveable": true,
+                "toggle": true
+            },
+            "state": 0
+        }
     ]
 }

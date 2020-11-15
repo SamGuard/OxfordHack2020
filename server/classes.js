@@ -57,11 +57,13 @@ class Map{
     }
 
     update(d, p){
+        let newObjects = [];
         for(let i = 0; i < d.length; i++){
             let o = d[i];
-            for(let j = 0; j < this.objects; j++){
-                if(o.id == this.objects[i].id){
+            for(let j = 0; j < this.objects.length; j++){
+                if(o.name == this.objects[j].name){
                     this.objects[i] = o;
+                    newObjects.push(o);
                 }
             }
         }
@@ -72,7 +74,7 @@ class Map{
             }
         }
 
-        return {objects: this.objects, players: this.players};
+        return {objects: newObjects, players: this.players};
     }
 }
 
