@@ -125,7 +125,7 @@ input {
   padding: 0;
   width: 9ch;
   background: repeating-linear-gradient(90deg, dimgrey 0, dimgrey 1ch, transparent 0, transparent 1.5ch) 0 100%/10ch 2px no-repeat;
-  font: 5ch droid sans mono, consolas, monospace;
+  font: 5ch droid sans mono, the8bit, monospace;
   letter-spacing: 0.5ch;
   color: #2C3E50;
   margin-bottom: 15px;

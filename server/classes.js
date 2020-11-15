@@ -68,6 +68,7 @@ class Map{
     }
 
     update(d, p){
+        let newObjects = [];
         for(let i = 0; i < d.length; i++){
             let o = d[i];
             let found = false;
@@ -87,7 +88,7 @@ class Map{
             }
         }
 
-        return {objects: this.objects, players: this.players};
+        return {objects: d, players: this.players};
     }
 }
 
