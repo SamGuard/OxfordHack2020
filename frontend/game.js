@@ -242,7 +242,6 @@ class Game {
             if (conHandler.game.level != null) {
                 console.log("Changed size");
                 conHandler.game.scale = (conHandler.game.ctx.canvas.height) / ((VERTICAL_FILL) * 16);
-                conHandler.game.scale = (conHandler.game.ctx.canvas.height) / ((conHandler.game.level.map.height-1) * 16);
             }
         });
 
@@ -739,8 +738,8 @@ class Game {
 
     // Draws a repeating background
     showBackground(tileNum) {
-        for (var w = 0; w < this.ctx.canvas.width; w += 64) {
-            for (var h = 0; h < this.ctx.canvas.height; h  += 64) {
+        for (var w = -this.ctx.canvas.width; w < this.ctx.canvas.width * 10; w += 64) {
+            for (var h = -this.ctx.canvas.height; h < this.ctx.canvas.height * 10; h  += 64) {
                 this.ctx.drawImage(this.backgroundImage, tileNum*64, 0, 64, 64, w, h, 64, 64);
             }
         }
