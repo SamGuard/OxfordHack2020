@@ -154,10 +154,6 @@ $(document).ready(function () {
         conHandler.joinRoom();
     });
 
-    $('#startGameButton').click(function () {
-        conHandler.startGame();
-    });
-
     $('#createGameButton').click(function () {
         $('#homePage').hide();
         $('#gamePage').hide();

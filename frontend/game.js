@@ -3,7 +3,20 @@ const RIGHT_KEY = 39;
 const UP_KEY = 38;
 const DOWN_KEY = 40;
 
+const PLAYER_WIDTH = 32;
+const PLAYER_HEIGHT = 32;
+
+const TILE_SIZE = 16;
+
+const ANIM_SPEED = 2; // The bigger the number, the slower.
+
+
 class Game {
+
+    // ------------------
+    // *** GAME SETUP ***
+    // ------------------
+
     constructor(isHost, conn, roomCode) {
         //make a game canvas using jquery in the game canvas container.
         $("#gameMenu").hide();
@@ -19,15 +32,20 @@ class Game {
     }
 
     // Function to start the game
-    async start(map) {
 
+    start(map) {
+        this.endImage = 0; // image loop iterator
+
+		this.lastR = true; // was the char last facing right?
+		this.start = true; // Have we played the appear animation?
+        this.appear = 0; // appear loop iterator
+        
         // Start the game tick loop
         this.gameUpdateInterval = setInterval(function () {
             conHandler.game.update();
         }, 20);
 
         // Imports level data
-        //this.level = await $.get("assets/map.json");
         this.level = map;
 
         // Imports the tile set
@@ -36,9 +54,26 @@ class Game {
 
         // Import the character image
         // TODO: Change this to a tile set and add character animation
-        this.charImage = new Image();
-        this.charImage.src = "assets/mydude.png";
-
+		this.charRunRight = new Image();
+		this.charRunRight.src = "assets/chars/char1-runRight.png";
+		this.charRunLeft = new Image();
+		this.charRunLeft.src = "assets/chars/char1-runLeft.png";
+		this.charIdleRight = new Image();
+		this.charIdleRight.src = "assets/chars/char1-idleRight.png";
+		this.charIdleLeft = new Image();
+        this.charIdleLeft.src = "assets/chars/char1-idleLeft.png";
+        this.charJumpLeft = new Image();
+        this.charJumpLeft.src = "assets/chars/char1-jumpLeft.png";
+        this.charJumpRight = new Image();
+        this.charJumpRight.src = "assets/chars/char1-jumpRight.png";
+        this.charFallLeft = new Image();
+		this.charFallLeft.src = "assets/chars/char1-fallLeft.png";
+        this.charFallRight = new Image();
+		this.charFallRight.src = "assets/chars/char1-fallRight.png";
+		this.charAppear = new Image();
+        this.charAppear.src = "assets/chars/char-appear.png";
+        this.charDisappear = new Image();
+        this.charDisappear.src = "assets/chars/char-disappear.png";
         var map = this.level.map;
 
         // Initialises the physics engine
@@ -74,6 +109,8 @@ class Game {
 
         // Add all needed event listeners
         this.setupEvents();
+
+        this.setupPhysics()
 
         // Sets the scale for the canvas (used in the renderer)
         this.scale = (this.ctx.canvas.height) / (map.height * 16);
@@ -153,6 +190,10 @@ class Game {
         this.ctx.imageSmoothingEnabled= false;
     }
 
+    // ------------------
+    // *** GAME TICKS ***
+    // ------------------
+
     // This runs every game tick
     update(){
         var player = this.level.player.obj;
@@ -162,25 +203,9 @@ class Game {
         this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
 
         // Transform the game to fill the canvas vertically
-        this.ctx.setTransform(this.scale, 0, 0, this.scale, 0.5*this.ctx.canvas.width - this.scale*player.position.x, 0);
+        this.ctx.setTransform(this.scale, 0, 0, this.scale, 0.5*this.ctx.canvas.width - this.scale * player.position.x, 0.5*this.ctx.canvas.height - this.scale * player.position.y);
 
-        // Apply player movement
-        // TODO: move this into a function
-        if(conHandler.game.keys[LEFT_KEY]) {
-            Matter.Body.setVelocity(player, {x: -3, y: 0})
-        }            
-        if(conHandler.game.keys[RIGHT_KEY]) {
-            Matter.Body.setVelocity(player, {x: 3, y: 0})
-        }            
-        if(conHandler.game.keys[UP_KEY]) {
-            Matter.Body.setVelocity(player, {x: 0, y: -3})
-        }            
-        if(conHandler.game.keys[DOWN_KEY]) {
-            Matter.Body.setVelocity(player, {x: 0, y: 3})
-        }
-
-        // Physics tick
-        Matter.Engine.update(this.engine, 20);
+        this.updatePlayerPhysics();
 
         // Render tick
         this.showMap();
@@ -190,6 +215,8 @@ class Game {
         this.showChar();
         this.showObjects();
 
+        // Physics tick
+        Matter.Engine.update(this.engine, 20);
         this.push(this.level.player.obj.position.x, this.level.player.obj.position.y);
     }
 
@@ -202,10 +229,137 @@ class Game {
         console.log(obj.attr.name, obj.attr.state);
     }
 
+    // -----------------------
+    // *** PHYSICS STUFF ***
+    // -----------------------
+
+    // Sets physics perameters for the player
+    setupPhysics() {
+        var player = this.level.player.obj;
+        player.mass = 100;
+        player.frictionAir = 0.02;
+        player.friction = 0.05;
+    }
+
+    // Player physics update
+    updatePlayerPhysics() {
+
+        const JUMP_SPEED = 12;
+        const LEFT_RIGHT_SPEED = 2.5;
+        const DROP_FORCE = 1;
+
+        var player = this.level.player.obj;
+
+        if(this.isOnFloor()) {
+            var velocity = {x: player.velocity.x, y: player.velocity.y}
+
+            if(this.keys[UP_KEY]) {
+                velocity.y = (velocity.y - JUMP_SPEED) /2;
+            }
+            if(this.keys[LEFT_KEY] && this.keys[RIGHT_KEY]) {
+                velocity.x = velocity.x / 2;
+            } else if(this.keys[RIGHT_KEY]) {
+                velocity.x = (velocity.x + LEFT_RIGHT_SPEED) /2;
+            } else if(this.keys[LEFT_KEY]) {
+                velocity.x = (velocity.x - LEFT_RIGHT_SPEED) / 2;
+            }
+            Matter.Body.setVelocity(player, velocity)
+        } else {
+            var velocity = player.velocity;
+            if(this.keys[LEFT_KEY] && this.keys[RIGHT_KEY]) {
+                velocity.x = velocity.x / 2;
+            } else if(this.keys[RIGHT_KEY]) {
+                velocity.x = (velocity.x * 2 + LEFT_RIGHT_SPEED) / 3;
+            } else if(this.keys[LEFT_KEY]) {
+                velocity.x = (velocity.x * 2 - LEFT_RIGHT_SPEED) / 3;
+            }
+            Matter.Body.setVelocity(player, velocity)
+        }
+    }
+
+    // Is player currently falling?
+    isOnFloor() {
+        var player = this.level.player.obj;
+
+        var x = Math.round(player.position.x / TILE_SIZE);
+        var y = Math.ceil((player.position.y + PLAYER_HEIGHT) / TILE_SIZE );
+        var y1 = Math.ceil((player.position.y + PLAYER_HEIGHT / 2) / TILE_SIZE );
+
+        var map = this.level.map;
+
+        if( player.velocity.y > 0.02 ) {
+            return false;
+        }
+
+        if( x < 0 || x >= map.width || y1 < 0 || y >= map.height || (map.structure[y][x] === -1 && map.structure[y1][x] === -1)) {
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    // -----------------------
+    // *** RENDERING STUFF ***
+    // -----------------------
+
     // Renders the player icon
     showChar() {
+        var curFrame = Math.floor(this.endImage / ANIM_SPEED);
+        var introFrames = Math.floor(this.endImage / ANIM_SPEED / 2);
         var player = this.level.player.obj;
-        this.ctx.drawImage(this.charImage, player.position.x, player.position.y);
+
+        this.endImage++;
+		if(this.start){ // show appear animation
+			this.ctx.drawImage(this.charAppear, 96*introFrames, 0, 96, 96, player.position.x-32, player.position.y-32, 96, 96);
+			if(this.endImage >= 6*ANIM_SPEED*2) {
+                this.endImage = 0;
+				this.start = false;
+			}
+        }
+        else if(this.keys[RIGHT_KEY]) {  // running right
+            this.lastR = true;
+            this.ctx.drawImage(this.charRunRight, 32*curFrame, 0, 32, 32, player.position.x, player.position.y, 32, 32);
+            if(this.endImage >= 11*ANIM_SPEED){
+                this.endImage = 0;
+            }
+        }
+        else if(this.keys[LEFT_KEY]) { // running left
+            this.lastR = false;
+            this.ctx.drawImage(this.charRunLeft, 32*curFrame, 0, 32, 32, player.position.x, player.position.y, 32, 32);
+            if(this.endImage >= 11*ANIM_SPEED){
+                this.endImage = 0;
+            }
+        }
+        else if (!this.isOnFloor()) {
+            this.endImage--;
+            if (player.velocity.y < 0) { // jumping
+                if (this.lastR) {
+                    this.ctx.drawImage(this.charJumpRight, 0, 0, 32, 32, player.position.x, player.position.y, 32, 32);
+                }
+                else {
+                    this.ctx.drawImage(this.charJumpLeft, 0, 0, 32, 32, player.position.x, player.position.y, 32, 32);
+                }
+            }
+            else { // falling
+                if (this.lastR) {
+                    this.ctx.drawImage(this.charFallRight, 0, 0, 32, 32, player.position.x, player.position.y, 32, 32);
+                }
+                else {
+                    this.ctx.drawImage(this.charFallLeft, 0, 0, 32, 32, player.position.x, player.position.y, 32, 32);
+                }            }
+        }
+        else if(this.lastR) { // idle right
+            this.ctx.drawImage(this.charIdleRight, 32*curFrame, 0, 32, 32, player.position.x, player.position.y, 32, 32);
+            if(this.endImage >= 10*ANIM_SPEED){
+                this.endImage = 0;
+            }
+        }
+        else if(!this.lastR){ // idle left
+            this.ctx.drawImage(this.charIdleLeft, 32*curFrame, 0, 32, 32, player.position.x, player.position.y, 32, 32);
+            if(this.endImage >= 10*ANIM_SPEED){
+                this.endImage = 0;
+            }
+        }
     }
 
     showChars(){
