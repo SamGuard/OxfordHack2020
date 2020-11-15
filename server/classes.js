@@ -39,7 +39,7 @@ class Room {
     getMap(){
         return {
             map: this.map.map,
-            objects: this.map.objects,
+            objects: this.map.defaultObjects,
             player: this.map.player
         };
     }
@@ -50,7 +50,8 @@ class Room {
 class Map{
     constructor(name){
         let data = JSON.parse(fs.readFileSync(process.cwd() + `/maps/${name}.json`, {encoding:'utf8', flag:'r'}));
-        this.objects = data.objects;
+        this.defaultObjects = data.objects;
+        this.objects = [];
         this.map = data.map;
         this.player = data.player;
         this.players = [];
@@ -59,10 +60,14 @@ class Map{
     update(d, p){
         for(let i = 0; i < d.length; i++){
             let o = d[i];
-            for(let j = 0; j < this.objects; j++){
-                if(o.id == this.objects[i].id){
+            let found = false;
+            for(let j = 0; j < this.objects.length; j++){
+                if(o.attr.name == this.objects[j].attr.name){
                     this.objects[i] = o;
                 }
+            }
+            if(found == false){
+                this.objects.push(o);
             }
         }
 

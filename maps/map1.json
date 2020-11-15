@@ -49,5 +49,32 @@
         "boundingBox": [{"x": 5, "y": 6}, {"x": 5, "y": 36}, {"x": 26, "y": 36}, {"x": 26, "y": 6}]
     },
     "objects": [
+        {
+            "name": "box",
+            "src": "box.png",
+            "x": 7,
+            "y": 5,
+            "visible": true,
+            "boundingBox": [{"x": 4, "y": 6}, {"x": 4, "y": 22}, {"x": 24, "y": 22}, {"x": 24, "y": 6}],
+            "actions": {
+                "button": true,
+                "door": false
+            },
+            "state": 0,
+            "target": "door"
+        },
+        {
+            "name": "door",
+            "src": "box.png",
+            "x": 3,
+            "y": 5,
+            "visible": true,
+            "boundingBox": [{"x": 4, "y": 6}, {"x": 4, "y": 22}, {"x": 24, "y": 22}, {"x": 24, "y": 6}],
+            "actions": {
+                "button": false,
+                "door": true                
+            },
+            "state": 0
+        }
     ]
 }
