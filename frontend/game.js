@@ -52,6 +52,8 @@ class Game {
         this.roomCode = roomCode;
 
         this.objectUpdateList = new SetClass();
+        this.idDebug = false;
+        $("#gameCanvas2").hide();
     }
 
     // Function to start the game
@@ -93,8 +95,10 @@ class Game {
         var map = this.level.map;
 
         // Initialises the physics engine
-        this.engine = Matter.Engine.create();
+        this.engine = Matter.Engine.create(
+       );
         this.world = this.engine.world;
+        this.world.gravity.y = 0.4;
 
         this.platforms = [];
 
@@ -190,6 +194,15 @@ class Game {
         // Store the current state of the keys in a dict so they can always be looked up
         $(window).keydown(function (e) {
             conHandler.game.keys[e.keyCode] = true;
+
+            if(e.keyCode == 84) {
+                conHandler.game.idDebug = !conHandler.game.idDebug;
+                if(conHandler.game.idDebug) {
+                    $("#gameCanvas2").show();
+                } else {
+                    $("#gameCanvas2").hide();
+                }
+            }
         });
 
         $(window).keyup(function (e) {
@@ -304,16 +317,16 @@ class Game {
     setupPhysics() {
         var player = this.level.player.obj;
         player.mass = 100;
-        player.frictionAir = 0.02;
-        player.friction = 0.05;
+        player.frictionAir = 0.01;
+        player.friction = 0.02;
     }
 
     // Player physics update
     updatePlayerPhysics() {
 
-        const JUMP_SPEED = 12;
+        const JUMP_SPEED = 5;
         const LEFT_RIGHT_SPEED = 2.5;
-        const DROP_FORCE = 1;
+        const DROP_FORCE = 5;
 
         var player = this.level.player.obj;
 
@@ -340,6 +353,9 @@ class Game {
                 velocity.x = (velocity.x * 2 + LEFT_RIGHT_SPEED) / 3;
             } else if (this.keys[LEFT_KEY]) {
                 velocity.x = (velocity.x * 2 - LEFT_RIGHT_SPEED) / 3;
+            }
+            if (this.keys[DOWN_KEY]) {
+                velocity.y = Math.max(velocity.y, (velocity.y + DROP_FORCE) / 2);
             }
             Matter.Body.setVelocity(player, velocity)
         }
@@ -375,12 +391,13 @@ class Game {
             return false;
         }
 
-        if( x1 < 0 || x >= map.width || y1 < 0 || y >= map.height ||
-            (map.structure[y][x] === -1 && map.structure[y1][x] === -1 && map.structure[y][x1] === -1 && map.structure[y1][x1] === -1)) {
+        if( x1 < 0 || x >= map.width || y1 < 0 || y >= map.height || x === NaN || y === NaN || x1 === NaN || x === NaN) {
             return false;
-        } else {
-            return true;
         }
+        if(map.structure[y][x] === -1 && map.structure[y1][x] === -1 && map.structure[y][x1] === -1 && map.structure[y1][x1] === -1) {
+            return false;
+        }
+        return true;
     }
 
     checkPlatforms() {
