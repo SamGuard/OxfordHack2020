@@ -592,9 +592,12 @@ class Game {
             for(let j = 0; j < this.level.objects.length; j++){
                 if(objects[i].attr.name == this.level.objects[j].attr.name){
                     this.level.objects[j].attr = objects[i].attr;
-                    this.level.objects[j].attr.image = new Image();
-                    this.level.objects[j].attr.image.src = this.level.objects[j].attr.src;
                     this.level.objects[j].collisionFilter = objects[i].collisionFilter;
+
+                    if(this.objectImages[this.level.objects[j].src] == undefined){
+                        this.objectImages[this.level.objects[j].src] = new Image();
+                        this.objectImages[this.level.objects[j].src].src = "assets/" + this.level.objects[j].src;
+                    }
                 }
             }
         }
