@@ -6,8 +6,8 @@ const DOWN_KEY = 40;
 const PLAYER_WIDTH = 32;
 const PLAYER_HEIGHT = 32;
 
-const VERT_FILL_FACTOR = 0.75;
-const HORZ_FILL_FACTOR = 0.75;
+const VERT_FILL_FACTOR = 0.8;
+const HORZ_FILL_FACTOR = 0.8;
 
 const TILE_SIZE = 16;
 
@@ -97,7 +97,11 @@ class Game {
         this.charAppear.src = "assets/chars/char-appear.png";
         this.charDisappear = new Image();
         this.charDisappear.src = "assets/chars/char-disappear.png";
+        this.backgroundImage = new Image();
+        this.backgroundImage.src = "assets/backgroundImage.png";
         var map = this.level.map;
+
+        this.backgroundTileNum = Math.floor(Math.random() * 6);
 
         // Initialises the physics engine
         this.engine = Matter.Engine.create(
@@ -266,12 +270,18 @@ class Game {
         this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
 
         // Transform the game to fill the canvas vertically
-        this.ctx.setTransform(this.scale, 0, 0, this.scale, 0.5 * this.ctx.canvas.width - this.scale * player.position.x, 0.5 * this.ctx.canvas.height - this.scale * player.position.y);
+        var hPan = 0.5 * this.ctx.canvas.width - this.scale * player.position.x;
+        if (hPan > 0) {
+            hPan = 0;
+        }
+        console.log(hPan);
+        this.ctx.setTransform(this.scale, 0, 0, this.scale, hPan, 0);
 
         // Player control physics
         this.updatePlayerPhysics();
         this.checkPlatforms();
 
+        this.showBackground(this.backgroundTileNum);
         // Render tick
         this.showMap();
 
@@ -584,6 +594,15 @@ class Game {
                 if (map.structure[row][col] !== -1) {
                     this.drawTile(map.structure[row][col], col, row);
                 }
+            }
+        }
+    }
+
+    // Draws a repeating background
+    showBackground(tileNum) {
+        for (var w = 0; w < this.ctx.canvas.width; w += 64) {
+            for (var h = 0; h < this.ctx.canvas.height; h  += 64) {
+                this.ctx.drawImage(this.backgroundImage, tileNum*64, 0, 64, 64, w, h, 64, 64);
             }
         }
     }

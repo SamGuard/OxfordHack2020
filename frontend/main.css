@@ -54,6 +54,11 @@ body {
   text-align: center;
 }
 
+#gameCanvas {
+  
+  border: solid 5px black;
+}
+
 #helpScreen {
   padding: 0 30px;
 }
