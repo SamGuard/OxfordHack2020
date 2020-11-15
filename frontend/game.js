@@ -63,6 +63,7 @@ class Game {
         this.lastR = true; // was the char last facing right?
         this.startAnim = true; // Have we played the appear animation?
         this.appear = 0; // appear loop iterator
+		this.disappear = false;//to play animation to remove character make true
 
         // Start the game tick loop
         this.gameUpdateInterval = setInterval(function () {
@@ -81,11 +82,11 @@ class Game {
 		this.charPlayer1 = new Image();
 		this.charPlayer1.src = "assets/chars/player1.png";
 		this.charPlayer2 = new Image();
-		this.charPlayer2.src = "assets/chars/player1.png";
+		this.charPlayer2.src = "assets/chars/player2.png";
 		this.charPlayer3 = new Image();
-		this.charPlayer3.src = "assets/chars/player1.png";
+		this.charPlayer3.src = "assets/chars/player3.png";
 		this.charPlayer4 = new Image();
-		this.charPlayer4.src = "assets/chars/player1.png";
+		this.charPlayer4.src = "assets/chars/player4.png";
 		this.charAppear = new Image();
         this.charAppear.src = "assets/chars/char-appear.png";
         this.charDisappear = new Image();
@@ -235,7 +236,7 @@ class Game {
 
         this.showChars();
 
-		let OutputChar = this.showChar(this.charPlayer1, this.endImage, player.position.x, player.position.y, this.keys[LEFT_KEY], this.keys[RIGHT_KEY], this.lastR, this.startAnim, this.isOnFloor(), player.velocity.y);
+		let OutputChar = this.showChar(this.charPlayer1, this.endImage, player.position.x, player.position.y, this.keys[LEFT_KEY], this.keys[RIGHT_KEY], this.lastR, this.startAnim, this.isOnFloor(), player.velocity.y, this.disappear);
 		this.endImage = OutputChar[0];
 		this.lastR = OutputChar[1];
 		this.startAnim = OutputChar[2];
@@ -362,7 +363,7 @@ class Game {
     // -----------------------
 
     // Renders the player icon
-    showChar(playerImage, endImage, xPos, yPos, moveL, moveR, lastR, start, onFloor, yVel) {
+    showChar(playerImage, endImage, xPos, yPos, moveL, moveR, lastR, start, onFloor, yVel, end) {
         xPos -= Matter.Vertices.centre(this.level.player.boundingBox).x;
         yPos -= Matter.Vertices.centre(this.level.player.boundingBox).y;
         var curFrame = Math.floor(endImage / ANIM_SPEED);
@@ -373,6 +374,13 @@ class Game {
 			if(endImage >= 6*ANIM_SPEED*2) {
                 endImage = 0;
 				start = false;
+			}
+        }
+		else if(end){ // show Disappear animation 
+			this.ctx.drawImage(this.charDisappear, 96*introFrames, 0, 96, 96, xPos-32, yPos-32, 96, 96);
+			if(endImage >= 6*ANIM_SPEED*2) {
+                endImage = 0;
+				end = false;
 			}
         }
         else if(moveR && onFloor) {  // running right
@@ -445,10 +453,18 @@ class Game {
                 moveL = false;
                 moveR = true;
             }
+			if(i == 0){
+				var img = this.charPlayer2;
+			}
+			else if(i == 1){
+				var img = this.charPlayer3;
+			}else{
+				var img = this.charPlayer4;
+			}
 
-            let OutputChar = this.showChar(this.charPlayer1, player.endImage, player.x,
+            let OutputChar = this.showChar(img, player.endImage, player.x,
                  player.y, moveL, moveR,
-                  player.lastR, player.start, true, player.vy);
+                  player.lastR, player.start, true, player.vy, false);//to run disappear set last value to true
 		    player.endImage = OutputChar[0];
 		    player.lastR = OutputChar[1];
 		    player.start = OutputChar[2];
