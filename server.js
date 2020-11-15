@@ -190,6 +190,24 @@ function gameUpdate(mess, conn){
     }
 }
 
+function endGame(mess, conn){
+    let roomID = mess.data.roomCode;
+    let data = mess.data.objects;
+
+    let room = findRoomByCode(roomID);
+    let clients = rooms[room].getClients();
+
+    for(let i = 0; i < clients.length; i++){
+        let connIndex = findPlayerByID(clients[i]);
+        connections[connIndex].sendUTF(JSON.stringify({
+            purp: "end",
+            data: {},
+            time: Date.now(),
+            id: connections[connIndex].id.id
+        }));   
+    }
+}
+
 function handleMessage(mess, conn) {
     mess = JSON.parse(mess);
     if (mess.purp == "setid") {
@@ -204,6 +222,8 @@ function handleMessage(mess, conn) {
         destroyRoom(mess, conn);
     } else if(mess.purp == "update"){
         gameUpdate(mess, conn);
+    } else if(mess.purp == "end"){
+        endGame(mess, conn);
     } else {
         conn.sendUTF(JSON.stringify({
             purp: "error",
