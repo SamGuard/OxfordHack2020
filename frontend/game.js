@@ -6,6 +6,9 @@ const DOWN_KEY = 40;
 const PLAYER_WIDTH = 32;
 const PLAYER_HEIGHT = 32;
 
+const VERT_FILL_FACTOR = 0.75;
+const HORZ_FILL_FACTOR = 0.75;
+
 const TILE_SIZE = 16;
 
 const ANIM_SPEED = 2; // The bigger the number, the slower.
@@ -41,7 +44,7 @@ class Game {
         $('#gameCanvasContainer').show();// Game canvas goes in here
         $('#gameEndScreen').hide();
 
-        this.setupCanvas(window.innerWidth / 2, window.innerHeight / 2);
+        this.setupCanvas(window.innerWidth * HORZ_FILL_FACTOR, window.innerHeight * VERT_FILL_FACTOR);
         this.keys = [];
 
         this.isHost = isHost;
@@ -175,7 +178,7 @@ class Game {
     setupEvents() {
         // On a resize change size of canvas and redo scale
         $(window).resize(function () {
-            conHandler.game.setupCanvas(window.innerWidth / 2, window.innerHeight / 2);
+            conHandler.game.setupCanvas(window.innerWidth * HORZ_FILL_FACTOR, window.innerHeight * VERT_FILL_FACTOR);
             // If map has been read in update map scaling
             if (conHandler.game.level != null) {
                 console.log("Changed size");
