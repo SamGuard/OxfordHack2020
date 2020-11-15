@@ -350,9 +350,23 @@ class Game {
 		this.endAnim = OutputChar[3];
 
 
+        
+
         // Physics tick
         Matter.Engine.update(this.engine, 20);
         this.push();
+
+        if(!this.alive){
+            let allDead = true;
+            for(let i = 0; i < this.level.players.length; i++){
+                if(this.level.players[i].alive == true){
+                    allDead = false;
+                }
+            }
+            if(allDead == true){
+                this.endGame();
+            }
+        }
     }
 
     doButtonThings(obj) {
