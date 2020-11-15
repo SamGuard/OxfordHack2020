@@ -10,7 +10,7 @@ const TILE_SIZE = 16;
 
 const ANIM_SPEED = 2; // The bigger the number, the slower.
 
-class Set{
+class SetClass{
     constructor(){
         this.data = [];
     }
@@ -48,15 +48,10 @@ class Game {
         this.conn = conn;
         this.roomCode = roomCode;
 
-        this.objectUpdateList = new Set();
+        this.objectUpdateList = new SetClass();
     }
 
     // Function to start the game
-
-    isEqual(item1, item2) {
-        return item1.x1 == item2.x1 && item1.x2 == item2.x2 && item1.y1 == item2.y1 && item1.y2 == item2.y2;
-    }
-
     start(map) {
         this.endImage = 0; // image loop iterator
 
@@ -66,7 +61,7 @@ class Game {
 
         // Start the game tick loop
         this.gameUpdateInterval = setInterval(function () {
-            conHandler.game.update();
+            conHandler.game.update()
         }, 20);
 
         // Imports level data
@@ -77,7 +72,6 @@ class Game {
         this.tilesetImage.src = "assets/" + this.level.map.tileset;
 
         // Import the character image
-        // TODO: Change this to a tile set and add character animation
 		this.charPlayer1 = new Image();
 		this.charPlayer1.src = "assets/chars/player1.png";
 		this.charPlayer2 = new Image();
@@ -106,7 +100,11 @@ class Game {
                         if ("boundingBox" in custom) {
                             var tempX = col * 16  + Matter.Vertices.centre(custom.boundingBox).x - 8;
                             var tempY = row * 16 + Matter.Vertices.centre(custom.boundingBox).y - 8;
-                            Matter.World.add(this.world, [Matter.Bodies.fromVertices(tempX, tempY, custom.boundingBox, { isStatic: true })]);
+                            var body = Matter.Bodies.fromVertices(tempX, tempY, custom.boundingBox, { isStatic: true });
+                            Matter.World.add(this.world, [body]);
+                            if("jumpThrough" in custom) {
+                                this.platforms.push(body);
+                            }
                             continue;
                         }
                     }
@@ -144,7 +142,6 @@ class Game {
         //other players
         this.level.players = [];
 
-
         //Objects
         let newObjects = [];
         this.objectImages = {};
@@ -164,6 +161,10 @@ class Game {
         }
 
         this.level.objects = newObjects;
+    }
+
+    isEqual(item1, item2) {
+        return item1.x1 == item2.x1 && item1.x2 == item2.x2 && item1.y1 == item2.y1 && item1.y2 == item2.y2;
     }
 
     // Adds any event handlers needed
@@ -228,7 +229,9 @@ class Game {
         // Transform the game to fill the canvas vertically
         this.ctx.setTransform(this.scale, 0, 0, this.scale, 0.5 * this.ctx.canvas.width - this.scale * player.position.x, 0.5 * this.ctx.canvas.height - this.scale * player.position.y);
 
+        // Player control physics
         this.updatePlayerPhysics();
+        this.checkPlatforms();
 
         // Render tick
         this.showMap();
@@ -354,6 +357,15 @@ class Game {
             return false;
         } else {
             return true;
+        }
+    }
+
+    checkPlatforms() {
+        var doPlatformsExist = this.isOnFloor() || this.level.player.obj.velocity.y > 0.02;
+        for(var plat in this.platforms) {
+            if(doPlatformsExist) {
+                this.platforms[plat].collisionFilter = -1;
+            }
         }
     }
 
