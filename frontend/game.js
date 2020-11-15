@@ -573,9 +573,9 @@ class Game {
                     lastR = false;
                 }
                 if(lastR){
-                    this.ctx.drawImage(this.charDeadL, 44*introFrames, 0, 44, 30, xPos, yPos, 44, 30);
+                    this.ctx.drawImage(this.charDeadL, 44*introFrames, 0, 44, 30, xPos, yPos, 22, 15);
                 }else{
-                    this.ctx.drawImage(this.charDeadR, 44*introFrames, 0, 44, 30, xPos, yPos, 44, 30);
+                    this.ctx.drawImage(this.charDeadR, 44*introFrames, 0, 44, 30, xPos, yPos, 22, 15);
                 }
                 if(endImage >= 9*ANIM_SPEED*2) {
                     endImage = 0;
