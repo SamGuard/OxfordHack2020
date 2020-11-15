@@ -108,7 +108,7 @@ class Game {
         this.engine = Matter.Engine.create(
        );
         this.world = this.engine.world;
-        this.world.gravity.y = 0.4;
+        this.world.gravity.y = 0.6;
 
         this.platforms = [];
 
@@ -254,6 +254,10 @@ class Game {
         this.ctx.fillStyle = "#F0F8FF";
         this.ctx.fillRect(0, 0, width, height);
         this.ctx.imageSmoothingEnabled = false;
+        let f = new FontFace('the8bit', 'url(assets/font/SuperLegendBoy-4w8Y.ttf)');
+        f.load().then(function() {
+            conHandler.game.ctx.font = "10px the8bit";
+        });
     }
 
     // ------------------
@@ -462,6 +466,9 @@ class Game {
 
     // Renders the player icon
     showChar(playerImage, endImage, xPos, yPos, moveL, moveR, lastR, start, onFloor, yVel, end) {
+        //if (playerImage == this.charPlayer1
+        this.ctx.filter = "grayscale(80%)";
+        this.ctx.fillText('Hello world', 10, 50);
         xPos -= Matter.Vertices.centre(this.level.player.boundingBox).x;
         yPos -= Matter.Vertices.centre(this.level.player.boundingBox).y;
         var curFrame = Math.floor(endImage / ANIM_SPEED);
@@ -535,6 +542,7 @@ class Game {
                 endImage = 0;
             }
         }
+        this.ctx.filter = "none"; 
 		return [endImage, lastR, start, end];
     }
 
