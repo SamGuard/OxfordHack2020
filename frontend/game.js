@@ -124,7 +124,7 @@ class Game {
         this.engine = Matter.Engine.create(
        );
         this.world = this.engine.world;
-        this.world.gravity.y = 0.6;
+        this.world.gravity.y = 0.4;
 
         // Add rectangles to contain world
 
