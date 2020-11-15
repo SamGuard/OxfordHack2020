@@ -61,7 +61,7 @@ class Game {
         this.endImage = 0; // image loop iterator
 
         this.lastR = true; // was the char last facing right?
-        this.start = true; // Have we played the appear animation?
+        this.startAnim = true; // Have we played the appear animation?
         this.appear = 0; // appear loop iterator
 
         // Start the game tick loop
@@ -96,112 +96,6 @@ class Game {
         this.engine = Matter.Engine.create();
         this.world = this.engine.world;
 
-        const visited = Array(map.height).fill(false).map(x => Array(map.width).fill(false));
-
-        for (var x = 0; x < map.width; x++) {
-            for (var y = 0; y < map.height; y++) {
-                if (visited[y][x]) continue;
-
-                // we found an actual square - check surrounding squares iteratively.
-                var currentPoly = []; // contains all squares confirmed to be connected
-                var stack = []; // contains squares to be searched
-
-                stack.push({"x": x, "y": y});
-
-                while (stack.length > 0) {
-                    var cur = stack.pop();
-
-                    var tileType = map.structure[cur.y][cur.x];
-                    if (tileType == -1) continue;
-                    if (visited[cur.y][cur.x]) continue;
-                    if (tileType in this.level.map.customTiles) continue;
-
-                    currentPoly.push({"x": cur.x, "y": cur.y});
-                    visited[cur.y][cur.x] = true;
-
-                    if (cur.y > 0) {
-                        if (!visited[cur.y-1][cur.x]) {
-                            stack.push({"x": cur.x, "y": cur.y-1});
-                        }
-                    }
-                    if (cur.y < map.height-1) {
-                        if (!visited[cur.y+1][cur.x]) {
-                            stack.push({"x": cur.x, "y": cur.y+1});
-                        }
-                    }
-                    if (cur.x > 0) {
-                        if (!visited[cur.y][cur.x-1]) {
-                            stack.push({"x": cur.x-1, "y": cur.y});
-                        }
-                    }
-                    if (cur.x < map.width-1) {
-                        if (!visited[cur.y][cur.x+1]) {
-                            stack.push({"x": cur.x+1, "y": cur.y});
-                        }
-                    }
-                }
-                if (currentPoly.length == 0) continue;
-
-                var edges = [];
-
-                for (var i in currentPoly) {
-                    var square = currentPoly[i];
-                    edges.push({"x1": square.x, "y1": square.y, "x2": square.x+1, "y2": square.y});
-                    edges.push({"x1": square.x, "y1": square.y, "x2": square.x, "y2": square.y+1});
-                    edges.push({"x1": square.x+1, "y1": square.y, "x2": square.x+1, "y2": square.y+1});
-                    edges.push({"x1": square.x, "y1": square.y+1, "x2": square.x+1, "y2": square.y+1});
-                }
-
-                var uniqueEdges = [];
-
-                for (var i in edges) {
-                    var square = edges[i];
-                    var count = 0;
-                    for (var j in edges) {
-                        var square2 = edges[j];
-                        if (this.isEqual(square, square2)) {
-                            count++;
-                        }
-                        if (count > 1) {
-                            break;
-                        }
-                    }
-                    if (count == 1) {
-                        uniqueEdges.push(square);
-                    }
-                }
-                var orderedUniqueEdges = [];
-                orderedUniqueEdges.push({"x": uniqueEdges[0].x1, "y": uniqueEdges[0].y1});
-                var toSearchFor = {"x": uniqueEdges[0].x2, "y": uniqueEdges[0].y2};
-                uniqueEdges.splice(0, 1);
-                var count = uniqueEdges.length;
-                while (count > 0) {
-                    for (var item in uniqueEdges) {
-                        var square = uniqueEdges[item];
-
-                        if (square.x1 == toSearchFor.x && square.y1 == toSearchFor.y) {
-                            orderedUniqueEdges.push({"x": square.x1, "y": square.y1});
-                            toSearchFor = {"x": square.x2, "y": square.y2};
-                            uniqueEdges.splice(item, 1);
-                            break;
-                        }
-                        else if (square.x2 == toSearchFor.x && square.y2 == toSearchFor.y) {
-                            orderedUniqueEdges.push({"x": square.x2, "y": square.y2});
-                            toSearchFor = {"x": square.x1, "y": square.y1};
-                            uniqueEdges.splice(item, 1);
-                            break;
-                        }
-                    }
-                    count--;
-                }
-                console.log(orderedUniqueEdges);
-                for (var item in orderedUniqueEdges) {
-                    orderedUniqueEdges[item].x *=16;
-                    orderedUniqueEdges[item].y *=16;
-                }
-                Matter.World.add(this.world, [Matter.Bodies.fromVertices(0 - (16 - Matter.Vertices.centre(orderedUniqueEdges).x), 0 - (16 - Matter.Vertices.centre(orderedUniqueEdges).y), orderedUniqueEdges, { isStatic: true })]);
-            }
-        }
         // Add a rectangle to the physics engine for every tile in the map
         for (var col = 0; col < map.width; col++) {
             for (var row = 0; row < map.height; row++) {
@@ -210,12 +104,13 @@ class Game {
                     if (tileType in this.level.map.customTiles) {
                         var custom = this.level.map.customTiles[tileType];
                         if ("boundingBox" in custom) {
-                            console.log(Matter.Vertices.centre(custom.boundingBox));
-                            Matter.World.add(this.world, [Matter.Bodies.fromVertices(col * 16 - (16 - Matter.Vertices.centre(custom.boundingBox).x), row * 16 - (16 - Matter.Vertices.centre(custom.boundingBox).y), custom.boundingBox, { isStatic: true })]);
-
+                            var tempX = col * 16  + Matter.Vertices.centre(custom.boundingBox).x - 8;
+                            var tempY = row * 16 + Matter.Vertices.centre(custom.boundingBox).y - 8;
+                            Matter.World.add(this.world, [Matter.Bodies.fromVertices(tempX, tempY, custom.boundingBox, { isStatic: true })]);
                             continue;
                         }
                     }
+                    Matter.World.add(this.world, [Matter.Bodies.rectangle(col*16, row*16, 16, 16, { isStatic: true })]);
                 }
             }
         }
@@ -223,7 +118,10 @@ class Game {
         var player = this.level.player;
 
         // Make player physics object
-        player.obj = Matter.Bodies.fromVertices(player.startPositions[0].x * 16 - 8, player.startPositions[0].y * 16 - 8, player.boundingBox, { inertia: Infinity });
+        var tempX = player.startPositions[0].x * 16 + Matter.Vertices.centre(player.boundingBox).x;
+        var tempY = player.startPositions[0].y * 16 + Matter.Vertices.centre(player.boundingBox).y;
+        player.obj = Matter.Bodies.fromVertices(tempX, tempY, player.boundingBox, { inertia: Infinity });
+        //player.obj = Matter.Bodies.rectangle(player.startPositions[0].x * 16, player.startPositions[0].y * 16, 32, 32, { inertia: Infinity });
 
         //player.obj = Matter.Bodies.rectangle(player.startPositions[0].x*16-8, player.startPositions[0].y*16-8, 32, 32, { inertia: Infinity });
         Matter.World.add(this.world, [player.obj]);
@@ -257,11 +155,10 @@ class Game {
             this.objectImages[this.level.objects[i].src].src = "assets/" + this.level.objects[i].src;
 
             if (this.level.objects[i].actions.button == true) {
-                newObjects[i] = Matter.Bodies.fromVertices(this.level.objects[i].x * 16 - 8, this.level.objects[i].y * 16 - 8, this.level.objects[i].boundingBox, { isStatic: true, isSensor: true });
+                newObjects[i] = Matter.Bodies.fromVertices(this.level.objects[i].x * 16, this.level.objects[i].y * 16, this.level.objects[i].boundingBox, { isStatic: true, isSensor: true });
             } else if (this.level.objects[i].actions.door == true) {
-                newObjects[i] = Matter.Bodies.fromVertices(this.level.objects[i].x * 16 - 8, this.level.objects[i].y * 16 - 8, this.level.objects[i].boundingBox, { isStatic: true });
+                newObjects[i] = Matter.Bodies.fromVertices(this.level.objects[i].x * 16, this.level.objects[i].y * 16, this.level.objects[i].boundingBox, { isStatic: true });
             }
-
             newObjects[i].attr = this.level.objects[i];
             Matter.World.add(this.world, [newObjects[i]]);
         }
@@ -338,10 +235,10 @@ class Game {
 
         this.showChars();
 
-		let OutputChar = this.showChar(this.charPlayer1, this.endImage, player.position.x, player.position.y, this.keys[LEFT_KEY], this.keys[RIGHT_KEY], this.lastR, this.start, this.isOnFloor(), player.velocity.y);
+		let OutputChar = this.showChar(this.charPlayer1, this.endImage, player.position.x, player.position.y, this.keys[LEFT_KEY], this.keys[RIGHT_KEY], this.lastR, this.startAnim, this.isOnFloor(), player.velocity.y);
 		this.endImage = OutputChar[0];
 		this.lastR = OutputChar[1];
-		this.start = OutputChar[2];
+		this.startAnim = OutputChar[2];
 
         this.showObjects();
 
@@ -466,6 +363,8 @@ class Game {
 
     // Renders the player icon
     showChar(playerImage, endImage, xPos, yPos, moveL, moveR, lastR, start, onFloor, yVel) {
+        xPos -= Matter.Vertices.centre(this.level.player.boundingBox).x;
+        yPos -= Matter.Vertices.centre(this.level.player.boundingBox).y;
         var curFrame = Math.floor(endImage / ANIM_SPEED);
         var introFrames = Math.floor(endImage / ANIM_SPEED / 2);
         endImage++;
@@ -531,11 +430,15 @@ class Game {
         }
     }
 
+    // newObjects[i] = Matter.Bodies.fromVertices(this.level.objects[i].x * 16 - (16 - Matter.Vertices.centre(this.level.objects[i].boundingBox).x), this.level.objects[i].y * 16 - (16 - Matter.Vertices.centre(this.level.objects[i].boundingBox).y), this.level.objects[i].boundingBox, { isStatic: true, isSensor: true });
+
     showObjects() {
         for (let i = 0; i < this.level.objects.length; i++) {
-            let object = this.level.objects[i];
-            if (object.attr.visible == true) {
-                this.ctx.drawImage(this.objectImages[object.attr.src], object.position.x, object.position.y);
+            let obj = this.level.objects[i];
+            if (obj.attr.visible == true) {
+                var tempX = obj.position.x - Matter.Vertices.centre(obj.attr.boundingBox).x;
+                var tempY = obj.position.y - Matter.Vertices.centre(obj.attr.boundingBox).y;
+                this.ctx.drawImage(this.objectImages[obj.attr.src], tempX, tempY);
             }
         }
     }
@@ -557,7 +460,7 @@ class Game {
     drawTile(tileNum, x, y) {
         var colNum = Math.floor(tileNum / (this.tilesetImage.width / 16));
         var rowNum = tileNum % (this.tilesetImage.width / 16);
-        this.ctx.drawImage(this.tilesetImage, 16 * rowNum, 16 * colNum, 16, 16, x * 16, y * 16, 16, 16);
+        this.ctx.drawImage(this.tilesetImage, 16 * rowNum, 16 * colNum, 16, 16, x * 16 - 8, y * 16 - 8, 16, 16);
     }
 
     pull(mess) {
