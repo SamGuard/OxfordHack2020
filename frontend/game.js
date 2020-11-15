@@ -417,9 +417,21 @@ class Game {
         for (let i = 0; i < this.level.players.length; i++) {
             let player = this.level.players[i];
 
+            let moveL, moveR;
+            if(Math.abs(player.vx) <= 0.001){
+                moveL = false;
+                moveR = false;
+            }else if(player.vx < 0){
+                moveL = true;
+                moveR = false;
+            }else{
+                moveL = false;
+                moveR = true;
+            }
+
             let OutputChar = this.showChar(this.charPlayer1, player.endImage, player.x,
-                 player.y, (player.vx > 0) ? true : false, (player.vx > 0) ? false : true,
-                  player.lastR, this.start, true, player.vy);
+                 player.y, moveL, moveR,
+                  player.lastR, player.start, true, player.vy);
 		    player.endImage = OutputChar[0];
 		    player.lastR = OutputChar[1];
 		    player.start = OutputChar[2];
@@ -489,6 +501,7 @@ class Game {
 
                 player.lastR = true; // was the char last facing right?
                 player.start = true; // Have we played the appear animation?
+                player.endImage = 0;
                 player.appear = 0; // appear loop iterator
 
 
