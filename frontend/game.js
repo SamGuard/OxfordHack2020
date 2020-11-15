@@ -29,7 +29,7 @@ class Game {
     }
 
     // Function to start the game
-    async start(map) {
+    start(map) {
 
         // Start the game tick loop
         this.gameUpdateInterval = setInterval(function () {
@@ -37,7 +37,6 @@ class Game {
         }, 20);
 
         // Imports level data
-        //this.level = await $.get("assets/map.json");
         this.level = map;
 
         // Imports the tile set
@@ -169,10 +168,10 @@ class Game {
 
     // Sets physics perameters for the player
     setupPhysics() {
-        var player = this.level.response.player.obj;
+        var player = this.level.player.obj;
         player.mass = 100;
-        player.frictionAir = 0.05;
-        player.friction = 0;
+        player.frictionAir = 0.02;
+        player.friction = 0.05;
     }
 
     // Player physics update
@@ -182,7 +181,7 @@ class Game {
         const LEFT_RIGHT_SPEED = 2.5;
         const DROP_FORCE = 1;
 
-        var player = this.level.response.player.obj;
+        var player = this.level.player.obj;
 
         if(this.isOnFloor()) {
             var velocity = {x: player.velocity.x, y: player.velocity.y}
@@ -200,12 +199,12 @@ class Game {
             Matter.Body.setVelocity(player, velocity)
         } else {
             var velocity = player.velocity;
-            if(this.keys[RIGHT_KEY]) {
-                velocity.x = LEFT_RIGHT_SPEED;
-            }
-
-            if(this.keys[LEFT_KEY]) {
-                velocity.x = -LEFT_RIGHT_SPEED;
+            if(this.keys[LEFT_KEY] && this.keys[RIGHT_KEY]) {
+                velocity.x = velocity.x / 2;
+            } else if(this.keys[RIGHT_KEY]) {
+                velocity.x = (velocity.x * 2 + LEFT_RIGHT_SPEED) / 3;
+            } else if(this.keys[LEFT_KEY]) {
+                velocity.x = (velocity.x * 2 - LEFT_RIGHT_SPEED) / 3;
             }
             Matter.Body.setVelocity(player, velocity)
         }
@@ -213,15 +212,15 @@ class Game {
 
     // Is player currently falling?
     isOnFloor() {
-        var player = this.level.response.player.obj;
+        var player = this.level.player.obj;
 
         var x = Math.round(player.position.x / TILE_SIZE);
         var y = Math.ceil((player.position.y + PLAYER_HEIGHT) / TILE_SIZE );
         var y1 = Math.ceil((player.position.y + PLAYER_HEIGHT / 2) / TILE_SIZE );
 
-        var map = this.level.response.map;
+        var map = this.level.map;
 
-        if( player.velocity.y > 0 ) {
+        if( player.velocity.y > 0.02 ) {
             return false;
         }
 
