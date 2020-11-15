@@ -333,7 +333,6 @@ class Game {
         var vPan = 0.5 * this.ctx.canvas.height - this.scale * player.position.y;
         vPan = Math.min(-minDist, Math.max(-this.level.map.height * 16 * this.scale + minDist + this.ctx.canvas.height, vPan));
 
-        console.log("hPan: " + hPan + ", vPan: " + vPan + ", scale: " + this.scale);
         this.ctx.setTransform(this.scale, 0, 0, this.scale, hPan, vPan);
 
         // Player control physics
