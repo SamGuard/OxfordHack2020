@@ -77,5 +77,19 @@
         "boundingBox": [{"x": 5, "y": 7}, {"x": 5, "y": 32}, {"x": 28, "y": 32}, {"x": 28, "y": 7}]
     },
     "objects": [
+        {
+            "name": "end",
+            "src": "End (idle).png",
+            "x": 5,
+            "y": -1,
+            "visible": true,
+            "boundingBox": [{"x": 0, "y": 0}, {"x": 64, "y": 0}, {"x": 64, "y": 64}, {"x": 0, "y": 64}],
+            "actions": {
+                "button": false,
+                "door": false,
+                "end": true,
+                "kills": false
+            }
+        }
     ]
 }

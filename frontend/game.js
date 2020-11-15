@@ -39,10 +39,17 @@ class Game {
     // ------------------
 
     constructor(isHost, conn, roomCode, playerNumber) {
-        this.setup(isHost, conn, roomCode, playerNumber);
+        this.score = 0;
+        this.playerNumber = playerNumber;
+        this.skinNumber = this.playerNumber;
+        this.isHost = isHost;
+        this.playerName = "PLAYER_" + this.playerNumber.toString();
+        this.conn = conn;
+        this.roomCode = roomCode;
+        this.setup();
     }
 
-    setup(isHost, conn, roomCode, playerNumber){
+    setup(){
         //make a game canvas using jquery in the game canvas container.
         $("#gameMenu").hide();
         $('#gameCanvasContainer').show();// Game canvas goes in here
@@ -50,11 +57,6 @@ class Game {
 
         this.setupCanvas(window.innerWidth * HORZ_FILL_FACTOR, window.innerHeight * VERT_FILL_FACTOR);
         this.keys = [];
-
-        this.isHost = isHost;
-        this.conn = conn;
-        this.roomCode = roomCode;
-
         this.objectUpdateList = new SetClass();
         
         this.idDebug = false;
@@ -62,11 +64,9 @@ class Game {
 
         this.winner = false;
         this.alive = true; // main player alive
-        this.score = 0;
+        
         this.sentMessage = false; //used in endGame to see if the winner has sent the message to the server
-        this.playerNumber = playerNumber;
-        this.skinNumber = this.playerNumber;
-        this.playerName = "PLAYER_" + this.playerNumber.toString();
+        
     }
 
     reset(){
@@ -745,19 +745,23 @@ class Game {
                     id: conHandler.id
                 }));
                 $('#WinOrLoseText').html("You Win");
+                return;
             }
         }else{
             $('#WinOrLoseText').html("You Lose");
         }
 
-        scores = [];
-
+        let scores = [];
+        $('#scoresContainer').html(`<div>Scores:</div>`);
+        $('#scoresContainer').append(`
+            <div>${this.playerName}    -   ${this.score}</div>
+         `);
         for(let i = 0; i < this.level.players.length; i++){
             let player =  this.level.players[i];
 
-            $('#scoresContainer').html();
+            
             $('#scoresContainer').append(`
-                <div>${player.playerName} ${player.score}</div>
+                <div>${player.playerName}    -   ${player.score}</div>
             `);
             //scores.push({name: player.playerName, score: player.score});
         }
