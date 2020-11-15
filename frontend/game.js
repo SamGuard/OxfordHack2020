@@ -115,6 +115,18 @@ class Game {
         this.world = this.engine.world;
         this.world.gravity.y = 0.4;
 
+        // Add rectangles to contain world
+
+        let width = 16*(this.level.map.width);
+        let height = 16*(this.level.map.height);
+        Matter.World.add(this.world, [
+            Matter.Bodies.rectangle(0, height/2, 8, height, {isStatic: true}),
+            Matter.Bodies.rectangle(width/2, 0, width, 8, {isStatic: true}),
+            Matter.Bodies.rectangle(width, height/2, 8, height, {isStatic: true}),
+            Matter.Bodies.rectangle(width/2, height, width, 8 , {isStatic: true}),
+        ]);
+
+
         this.platforms = [];
 
         // Add a rectangle to the physics engine for every tile in the map
@@ -261,6 +273,7 @@ class Game {
                                 conHandler.game.alive = false;
                             } else if (pair[p].attr.state == "off") {
                                 pair[p].attr.state = "hit";
+                                conHandler.game.objectUpdateList.push(pair[p]);
                             }
                         }
                     }
