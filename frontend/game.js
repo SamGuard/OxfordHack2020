@@ -725,6 +725,19 @@ class Game {
         }else{
             $('#WinOrLoseText').html("You Lose");
         }
+
+        scores = [];
+
+        for(let i = 0; i < this.level.players.length; i++){
+            let player =  this.level.players[i];
+
+            $('#scoresContainer').html();
+            $('#scoresContainer').append(`
+                <div>${player.playerName} ${player.score}</div>
+            `);
+            //scores.push({name: player.playerName, score: player.score});
+        }
+
         $('#gameCanvasContainer').hide();
         $('#gameEndScore').html(`Score: ${this.score}`);
         $('#gameEndScreen').show();
@@ -752,6 +765,7 @@ class Game {
                     this.level.players[j].alive = players[i].alive;
                     this.level.players[j].skinNumber = players[i].skinNumber;
                     this.level.players[j].playerName = players[i].playerName;
+                    this.level.players[j].score = players[i].score;
                     found = true;
                     break;
                 }
@@ -765,6 +779,7 @@ class Game {
                 player.vy = players[i].vy;
                 player.alive = players[i].alive;
                 player.skinNumber = players[i].skinNumber;
+                player.score = players[i].score;
                 player.playerName = players[i].playerName;
 
                 player.lastR = true; // was the char last facing right?
@@ -811,6 +826,7 @@ class Game {
                 alive: this.alive,
                 skinNumber: this.skinNumber,
                 playerName: this.playerName
+                score: this.score
                 } 
             },
             time: Date.now(),
