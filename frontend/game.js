@@ -33,6 +33,10 @@ class Game {
 
     // Function to start the game
 
+    isEqual(item1, item2) {
+        return item1.x1 == item2.x1 && item1.x2 == item2.x2 && item1.y1 == item2.y1 && item1.y2 == item2.y2;
+    }
+
     start(map) {
         this.endImage = 0; // image loop iterator
 
@@ -80,6 +84,112 @@ class Game {
         this.engine = Matter.Engine.create();
         this.world = this.engine.world;
 
+        const visited = Array(map.height).fill(false).map(x => Array(map.width).fill(false));
+
+        for (var x = 0; x < map.width; x++) {
+            for (var y = 0; y < map.height; y++) {
+                if (visited[y][x]) continue;
+
+                // we found an actual square - check surrounding squares iteratively.
+                var currentPoly = []; // contains all squares confirmed to be connected
+                var stack = []; // contains squares to be searched
+
+                stack.push({"x": x, "y": y});
+
+                while (stack.length > 0) {
+                    var cur = stack.pop();
+
+                    var tileType = map.structure[cur.y][cur.x];
+                    if (tileType == -1) continue;
+                    if (visited[cur.y][cur.x]) continue;
+                    if (tileType in this.level.map.customTiles) continue;
+
+                    currentPoly.push({"x": cur.x, "y": cur.y});
+                    visited[cur.y][cur.x] = true;
+
+                    if (cur.y > 0) {
+                        if (!visited[cur.y-1][cur.x]) {
+                            stack.push({"x": cur.x, "y": cur.y-1});
+                        }
+                    }
+                    if (cur.y < map.height-1) {
+                        if (!visited[cur.y+1][cur.x]) {
+                            stack.push({"x": cur.x, "y": cur.y+1});
+                        }
+                    }
+                    if (cur.x > 0) {
+                        if (!visited[cur.y][cur.x-1]) {
+                            stack.push({"x": cur.x-1, "y": cur.y});
+                        }
+                    }
+                    if (cur.x < map.width-1) {
+                        if (!visited[cur.y][cur.x+1]) {
+                            stack.push({"x": cur.x+1, "y": cur.y});
+                        }
+                    }
+                }
+                if (currentPoly.length == 0) continue;
+
+                var edges = [];
+
+                for (var i in currentPoly) {
+                    var square = currentPoly[i];
+                    edges.push({"x1": square.x, "y1": square.y, "x2": square.x+1, "y2": square.y});
+                    edges.push({"x1": square.x, "y1": square.y, "x2": square.x, "y2": square.y+1});
+                    edges.push({"x1": square.x+1, "y1": square.y, "x2": square.x+1, "y2": square.y+1});
+                    edges.push({"x1": square.x, "y1": square.y+1, "x2": square.x+1, "y2": square.y+1});
+                }
+
+                var uniqueEdges = [];
+
+                for (var i in edges) {
+                    var square = edges[i];
+                    var count = 0;
+                    for (var j in edges) {
+                        var square2 = edges[j];
+                        if (this.isEqual(square, square2)) {
+                            count++;
+                        }
+                        if (count > 1) {
+                            break;
+                        }
+                    }
+                    if (count == 1) {
+                        uniqueEdges.push(square);
+                    }
+                }
+                var orderedUniqueEdges = [];
+                orderedUniqueEdges.push({"x": uniqueEdges[0].x1, "y": uniqueEdges[0].y1});
+                var toSearchFor = {"x": uniqueEdges[0].x2, "y": uniqueEdges[0].y2};
+                uniqueEdges.splice(0, 1);
+                var count = uniqueEdges.length;
+                while (count > 0) {
+                    for (var item in uniqueEdges) {
+                        var square = uniqueEdges[item];
+
+                        if (square.x1 == toSearchFor.x && square.y1 == toSearchFor.y) {
+                            orderedUniqueEdges.push({"x": square.x1, "y": square.y1});
+                            toSearchFor = {"x": square.x2, "y": square.y2};
+                            uniqueEdges.splice(item, 1);
+                            break;
+                        }
+                        else if (square.x2 == toSearchFor.x && square.y2 == toSearchFor.y) {
+                            orderedUniqueEdges.push({"x": square.x2, "y": square.y2});
+                            toSearchFor = {"x": square.x1, "y": square.y1};
+                            uniqueEdges.splice(item, 1);
+                            break;
+                        }
+                    }
+                    count--;
+                }
+                console.log(orderedUniqueEdges);
+                for (var item in orderedUniqueEdges) {
+                    orderedUniqueEdges[item].x *=16;
+                    orderedUniqueEdges[item].y *=16;
+                }
+                Matter.World.add(this.world, [Matter.Bodies.fromVertices(0 - (16 - Matter.Vertices.centre(orderedUniqueEdges).x), 0 - (16 - Matter.Vertices.centre(orderedUniqueEdges).y), orderedUniqueEdges, { isStatic: true })]);
+            }
+        }
         // Add a rectangle to the physics engine for every tile in the map
         for (var col = 0; col < map.width; col++) {
             for (var row = 0; row < map.height; row++) {
@@ -94,7 +204,7 @@ class Game {
                             continue;
                         }
                     }
-                    Matter.World.add(this.world, [Matter.Bodies.rectangle(col*16-8,row*16-8,16,16, { isStatic: true })]);
+                    //Matter.World.add(this.world, [Matter.Bodies.rectangle(col*16-8,row*16-8,16,16, { isStatic: true })]);
                 }
             }
         }
@@ -215,14 +325,15 @@ class Game {
             if(this.keys[UP_KEY]) {
                 velocity.y = (velocity.y - JUMP_SPEED) /2;
             }
-            if(this.keys[LEFT_KEY] && this.keys[RIGHT_KEY]) {
+            if(this.keys[LEFT_KEY] && this.keys[RIGHT_KEY] || (!this.keys[LEFT_KEY] && !this.keys[RIGHT_KEY])) {
                 velocity.x = velocity.x / 2;
             } else if(this.keys[RIGHT_KEY]) {
                 velocity.x = (velocity.x + LEFT_RIGHT_SPEED) /2;
             } else if(this.keys[LEFT_KEY]) {
                 velocity.x = (velocity.x - LEFT_RIGHT_SPEED) / 2;
             }
-            Matter.Body.setVelocity(player, velocity)
+            Matter.Body.setVelocity(player, velocity);
+            player.force = {x: 0, y: player.force.y};
         } else {
             var velocity = player.velocity;
             if(this.keys[LEFT_KEY] && this.keys[RIGHT_KEY]) {
@@ -305,7 +416,8 @@ class Game {
                 }
                 else {
                     this.ctx.drawImage(this.charFallLeft, 0, 0, 32, 32, player.position.x, player.position.y, 32, 32);
-                }            }
+                }            
+            }
         }
         else if(this.lastR) { // idle right
             this.ctx.drawImage(this.charIdleRight, 32*curFrame, 0, 32, 32, player.position.x, player.position.y, 32, 32);
