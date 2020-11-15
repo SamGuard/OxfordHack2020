@@ -6,11 +6,14 @@ const DOWN_KEY = 40;
 const PLAYER_WIDTH = 32;
 const PLAYER_HEIGHT = 32;
 
+const VERT_FILL_FACTOR = 0.75;
+const HORZ_FILL_FACTOR = 0.75;
+
 const TILE_SIZE = 16;
 
 const ANIM_SPEED = 2; // The bigger the number, the slower.
 
-class Set{
+class SetClass{
     constructor(){
         this.data = [];
     }
@@ -41,22 +44,17 @@ class Game {
         $('#gameCanvasContainer').show();// Game canvas goes in here
         $('#gameEndScreen').hide();
 
-        this.setupCanvas(window.innerWidth / 2, window.innerHeight / 2);
+        this.setupCanvas(window.innerWidth * HORZ_FILL_FACTOR, window.innerHeight * VERT_FILL_FACTOR);
         this.keys = [];
 
         this.isHost = isHost;
         this.conn = conn;
         this.roomCode = roomCode;
 
-        this.objectUpdateList = new Set();
+        this.objectUpdateList = new SetClass();
     }
 
     // Function to start the game
-
-    isEqual(item1, item2) {
-        return item1.x1 == item2.x1 && item1.x2 == item2.x2 && item1.y1 == item2.y1 && item1.y2 == item2.y2;
-    }
-
     start(map) {
         this.endImage = 0; // image loop iterator
 
@@ -65,9 +63,11 @@ class Game {
         this.appear = 0; // appear loop iterator
 		this.disappear = false;//to play animation to remove character make true
 
+        this.isPlayerOnBox = false;
+
         // Start the game tick loop
         this.gameUpdateInterval = setInterval(function () {
-            conHandler.game.update();
+            conHandler.game.update()
         }, 20);
 
         // Imports level data
@@ -78,7 +78,6 @@ class Game {
         this.tilesetImage.src = "assets/" + this.level.map.tileset;
 
         // Import the character image
-        // TODO: Change this to a tile set and add character animation
 		this.charPlayer1 = new Image();
 		this.charPlayer1.src = "assets/chars/player1.png";
 		this.charPlayer2 = new Image();
@@ -97,6 +96,8 @@ class Game {
         this.engine = Matter.Engine.create();
         this.world = this.engine.world;
 
+        this.platforms = [];
+
         // Add a rectangle to the physics engine for every tile in the map
         for (var col = 0; col < map.width; col++) {
             for (var row = 0; row < map.height; row++) {
@@ -107,7 +108,11 @@ class Game {
                         if ("boundingBox" in custom) {
                             var tempX = col * 16  + Matter.Vertices.centre(custom.boundingBox).x - 8;
                             var tempY = row * 16 + Matter.Vertices.centre(custom.boundingBox).y - 8;
-                            Matter.World.add(this.world, [Matter.Bodies.fromVertices(tempX, tempY, custom.boundingBox, { isStatic: true })]);
+                            var body = Matter.Bodies.fromVertices(tempX, tempY, custom.boundingBox, { isStatic: true });
+                            Matter.World.add(this.world, [body]);
+                            if("jumpThrough" in custom) {
+                                this.platforms.push(body);
+                            }
                             continue;
                         }
                     }
@@ -145,7 +150,6 @@ class Game {
         //other players
         this.level.players = [];
 
-
         //Objects
         let newObjects = [];
         this.objectImages = {};
@@ -167,11 +171,15 @@ class Game {
         this.level.objects = newObjects;
     }
 
+    isEqual(item1, item2) {
+        return item1.x1 == item2.x1 && item1.x2 == item2.x2 && item1.y1 == item2.y1 && item1.y2 == item2.y2;
+    }
+
     // Adds any event handlers needed
     setupEvents() {
         // On a resize change size of canvas and redo scale
         $(window).resize(function () {
-            conHandler.game.setupCanvas(window.innerWidth / 2, window.innerHeight / 2);
+            conHandler.game.setupCanvas(window.innerWidth * HORZ_FILL_FACTOR, window.innerHeight * VERT_FILL_FACTOR);
             // If map has been read in update map scaling
             if (conHandler.game.level != null) {
                 console.log("Changed size");
@@ -229,7 +237,9 @@ class Game {
         // Transform the game to fill the canvas vertically
         this.ctx.setTransform(this.scale, 0, 0, this.scale, 0.5 * this.ctx.canvas.width - this.scale * player.position.x, 0.5 * this.ctx.canvas.height - this.scale * player.position.y);
 
+        // Player control physics
         this.updatePlayerPhysics();
+        this.checkPlatforms();
 
         // Render tick
         this.showMap();
@@ -346,6 +356,21 @@ class Game {
 
         var map = this.level.map;
 
+        let objects = this.level.objects;
+        for(var i in objects) {
+            if((player.bounds.max.x >= objects[i].bounds.min.x && player.bounds.max.x <= objects[i].bounds.max.x ) ||
+                (player.bounds.min.x >= objects[i].bounds.min.x && player.bounds.min.x <= objects[i].bounds.max.x ) ||
+                (player.bounds.min.x <= objects[i].bounds.min.x && player.bounds.max.x >= objects[i].bounds.max.x ))
+            {
+                if(player.bounds.max.y > objects[i].bounds.min.y - 10 && player.bounds.max.y < objects[i].bounds.min.y + 2) {
+                    if(objects[i].attr !== undefined && objects[i].attr.actions.door == true && objects[i].attr.visible === true) {
+                        return true;
+                    }
+                }
+
+            }
+        }
+
         if (player.velocity.y > 0.02) {
             return false;
         }
@@ -355,6 +380,17 @@ class Game {
             return false;
         } else {
             return true;
+        }
+    }
+
+    checkPlatforms() {
+        // var doPlatformsExist = (this.level.player.obj.velocity !== null && this.level.player.obj.velocity.y > -0.05);
+        for(var plat in this.platforms) {
+            if(this.level.player.obj.bounds.max.y - 5 < this.platforms[plat].bounds.min.y) {
+                this.platforms[plat].collisionFilter.category = 1;
+            } else {
+                this.platforms[plat].collisionFilter.category = 0;
+            }
         }
     }
 
