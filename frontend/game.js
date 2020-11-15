@@ -59,6 +59,7 @@ class Game {
         this.winner = false;
         this.alive = true;
         this.score = 0;
+        this.sentMessage = false; //used in endGame to see if the winner has sent the message to the server
     }
 
     // Function to start the game
@@ -625,19 +626,25 @@ class Game {
 
     endGame(){
         if(this.winner == true){
-            this.conn.send(JSON.stringify({
-                purp: "end",
-                data: { roomCode: this.roomCode},
-                time: Date.now(),
-                id: conHandler.id
-            }));
-            $('#WinOrLooseText').html("You Win");
+            if(this.sentMessage == false){
+                this.sentMessage = true;
+                this.conn.send(JSON.stringify({
+                    purp: "end",
+                    data: { roomCode: this.roomCode},
+                    time: Date.now(),
+                    id: conHandler.id
+                }));
+                $('#WinOrLooseText').html("You Win");
+            }
         }else{
             $('#WinOrLooseText').html("You Loose");
         }
         $('#gameCanvasContainer').hide();
         $('#gameEndScore').html(`Score: ${this.score}`);
         $('#gameEndScreen').show();
+
+        clearTimeout(this.gameUpdateInterval);
+        this.engine.events = {};
     }
 
     pull(mess) {

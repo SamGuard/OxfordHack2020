@@ -44,7 +44,13 @@ class Room {
         };
     }
 
+    newMap(){
+        this.map = new Map("map1");
 
+        for(let i = 0; i < this.clients.length; i++){
+            this.map.players.push({id: this.clients[i].id, x: 0, y: 0});
+        }
+    }
 }
 
 class Map{

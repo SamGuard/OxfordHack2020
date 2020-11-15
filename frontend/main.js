@@ -83,6 +83,16 @@ class ConnectionHandler {
         this.game = new Game(this.isHost, this.socket, this.roomCode);
         this.game.start(map);
     }
+
+    nextGame(){
+        let data = JSON.stringify({
+            purp: "newGame",
+            data: { roomCode: this.roomCode },
+            time: Date.now(),
+            id: this.id
+        });
+        this.socket.send(data);
+    }
 };
 
 let conHandler = new ConnectionHandler();
@@ -196,8 +206,17 @@ $(document).ready(function () {
         $('#createGamePage').hide();
     });
 
-    $('#newGameButton').click(function(){
+    $('#exitGame').click(function(){
         window.location = "";
+    });
+
+    $('#newGame').click(function(){
+        conHandler.nextGame();
+        $('#homePage').hide();
+        $('#gamePage').show();
+        $('#helpScreen').hide();
+        $('#createGamePage').hide();
+        $('#waitingRoom').hide();
     });
 
     $('#help').click(function(){
