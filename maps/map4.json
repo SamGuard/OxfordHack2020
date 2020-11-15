@@ -129,7 +129,7 @@
     "objects": [
         {
             "name": "end",
-            "src": "End (idle).png",
+            "src": "End (Idle).png",
             "x": 9,
             "y": -7,
             "visible": true,

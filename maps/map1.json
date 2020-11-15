@@ -83,7 +83,7 @@
         },
         {
             "name": "end",
-            "src": "End (idle).png",
+            "src": "End (Idle).png",
             "x": 9,
             "y": -2,
             "visible": true,
@@ -97,7 +97,7 @@
         },
         {
             "name": "spike1",
-            "src": "Traps/Spikes/idle.png",
+            "src": "Traps/Spikes/Idle.png",
             "x": 10,
             "y": 8,
             "visible": true,
@@ -111,7 +111,7 @@
         },
         {
             "name": "spike2",
-            "src": "Traps/Spikes/idle.png",
+            "src": "Traps/Spikes/Idle.png",
             "x": 11,
             "y": 8,
             "visible": true,
