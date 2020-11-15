@@ -825,7 +825,7 @@ class Game {
                 vy: this.level.player.obj.velocity.y,
                 alive: this.alive,
                 skinNumber: this.skinNumber,
-                playerName: this.playerName
+                playerName: this.playerName,
                 score: this.score
                 } 
             },
