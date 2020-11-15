@@ -414,9 +414,9 @@ class Game {
     }
 
     showChars() {
-        for (let i = 0; i > this.level.players.length; i++) {
+        for (let i = 0; i < this.level.players.length; i++) {
             let player = this.level.players[i];
-            this.ctx.drawImage(this.charIdleLeft, player.x, player.y);
+            this.ctx.drawImage(this.objectImages["box.png"], player.x, player.y);
         }
     }
 
