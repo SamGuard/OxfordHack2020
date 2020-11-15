@@ -347,7 +347,7 @@ class Game {
 
         // Physics tick
         Matter.Engine.update(this.engine, 20);
-        this.push(this.level.player.obj.position.x, this.level.player.obj.position.y);
+        this.push();
     }
 
     doButtonThings(obj) {
@@ -527,7 +527,29 @@ class Game {
     showChars() {
         for (let i = 0; i < this.level.players.length; i++) {
             let player = this.level.players[i];
-            this.ctx.drawImage(this.objectImages["box.png"], player.x, player.y);
+
+            let moveL, moveR;
+            if(Math.abs(player.vx) <= 0.001){
+                moveL = false;
+                moveR = false;
+            }else if(player.vx < 0){
+                moveL = true;
+                moveR = false;
+            }else{
+                moveL = false;
+                moveR = true;
+            }
+
+            let OutputChar = this.showChar(this.charPlayer1, player.endImage, player.x,
+                 player.y, moveL, moveR,
+                  player.lastR, player.start, true, player.vy);
+		    player.endImage = OutputChar[0];
+		    player.lastR = OutputChar[1];
+		    player.start = OutputChar[2];
+
+            //this.ctx.drawImage(this.objectImages["box.png"], player.x, player.y);
+
+            this.level.players[i] = player;
         }
     }
 
@@ -574,6 +596,8 @@ class Game {
                 } else if (players[i].id == this.level.players[j].id) {
                     this.level.players[j].x = players[i].x;
                     this.level.players[j].y = players[i].y;
+                    this.level.players[j].vx = players[i].vx;
+                    this.level.players[j].vy = players[i].vy;
                     found = true;
                     break;
                 }
@@ -583,6 +607,14 @@ class Game {
                 let player = { id: players[i].id };
                 player.x = players[i].x;
                 player.y = players[i].y;
+                player.vx = players[i].vx;
+                player.vy = players[i].vy;
+
+                player.lastR = true; // was the char last facing right?
+                player.start = true; // Have we played the appear animation?
+                player.endImage = 0;
+                player.appear = 0; // appear loop iterator
+
 
                 this.level.players.push(player);
             }
@@ -605,7 +637,7 @@ class Game {
         //Players contains the positions of every player, but ignore the player with an id == conHandler.id as this is you
     }
 
-    push(playerX, playerY) {
+    push() {
         let objects = [];
 
         for(let i = 0; i < this.objectUpdateList.data.length; i++){
@@ -615,7 +647,13 @@ class Game {
 
         this.conn.send(JSON.stringify({
             purp: "update",
-            data: { roomCode: this.roomCode, objects: objects, player: { id: conHandler.id, x: playerX, y: playerY } },
+            data: { roomCode: this.roomCode, objects: objects, player: { id: conHandler.id, 
+                x: this.level.player.obj.position.x,
+                y: this.level.player.obj.position.y, 
+                vx: this.level.player.obj.velocity.x,
+                vy: this.level.player.obj.velocity.y 
+                } 
+            },
             time: Date.now(),
             id: conHandler.id
         }));
