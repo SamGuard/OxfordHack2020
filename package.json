@@ -21,6 +21,7 @@
     "express": "^4.17.1",
     "matter-js": "^0.14.2",
     "nodemon": "^2.0.6",
+    "poly-decomp": "^0.3.0",
     "short-id": "0.1.0-1",
     "websocket": "^1.0.32"
   }

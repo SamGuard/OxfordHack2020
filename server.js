@@ -156,22 +156,36 @@ function removePlayer(id) {
     if (playerIndex != -1) {
         connections.splice(playerIndex, 1);
     }
+
+    for(let i = 0; i < rooms.length; i++){
+        for(let j = 0; j < rooms[i].clients.length; j++){
+            if(compareID(id, rooms[i].clients[j]) == true){
+                rooms[i].clients.splice(j, 1);
+                if(rooms[i].length == 0){
+                    rooms.splice(i, 1);
+                }
+                return;
+            }
+        }
+    }
+
 }
 
 function gameUpdate(mess, conn){
     let roomID = mess.data.roomCode;
     let data = mess.data.objects;
+    let player = mess.data.player;
 
     let room = findRoomByCode(roomID);
-    let newObjects = rooms[room].updateGame(data);
+    let dataOut = rooms[room].updateGame(data, player);
     let clients = rooms[room].getClients();
     for(let i = 0; i < clients.length; i++){
-        let conn = findPlayerByID(clients[i]);
-        connections[conn].sendUTF(JSON.stringify({
+        let connIndex = findPlayerByID(clients[i]);
+        connections[connIndex].sendUTF(JSON.stringify({
             purp: "update",
-            data: {objects: newObjects},
+            data: {objects: dataOut.objects, players: dataOut.players},
             time: Date.now(),
-            id: connections[conn].id.id
+            id: connections[connIndex].id.id
         }));   
     }
 }
