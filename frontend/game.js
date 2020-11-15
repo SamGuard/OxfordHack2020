@@ -62,6 +62,7 @@ class Game {
         this.sentMessage = false; //used in endGame to see if the winner has sent the message to the server
         this.playerNumber = playerNumber;
         this.skinNumber = Math.floor(Math.random() * 4);
+        this.playerName = "jo" + this.playerNumber.toString();
     }
 
     // Function to start the game
@@ -317,7 +318,7 @@ class Game {
 
         if(!this.end){
             var image = this.charImages[this.skinNumber];
-            let OutputChar = this.showChar(image, this.endImage, player.position.x, player.position.y, this.keys[LEFT_KEY], this.keys[RIGHT_KEY], this.lastR, this.startAnim, this.isOnFloor(), player.velocity.y, !this.alive, "jcryer", this.playerNumber);
+            let OutputChar = this.showChar(image, this.endImage, player.position.x, player.position.y, this.keys[LEFT_KEY], this.keys[RIGHT_KEY], this.lastR, this.startAnim, this.isOnFloor(), player.velocity.y, !this.alive, this.playerName, this.playerNumber);
             this.endImage = OutputChar[0];
             this.lastR = OutputChar[1];
             this.startAnim = OutputChar[2];
@@ -593,7 +594,7 @@ class Game {
                 if(player.alive != undefined){
                     let OutputChar = this.showChar(img, player.endImage, player.x,
                         player.y, moveL, moveR,
-                        player.lastR, player.start, (Math.abs(player.vy) > 0.01) ? false : true, player.vy, !player.alive, "testName", player.playerNumber);//to run disappear set last value to true
+                        player.lastR, player.start, (Math.abs(player.vy) > 0.01) ? false : true, player.vy, !player.alive, player.playerName, player.playerNumber);//to run disappear set last value to true
                     player.endImage = OutputChar[0];
                     player.lastR = OutputChar[1];
                     player.start = OutputChar[2];
@@ -716,6 +717,7 @@ class Game {
                     this.level.players[j].vy = players[i].vy;
                     this.level.players[j].alive = players[i].alive;
                     this.level.players[j].skinNumber = players[i].skinNumber;
+                    this.level.players[j].playerName = players[i].playerName;
                     found = true;
                     break;
                 }
@@ -729,6 +731,7 @@ class Game {
                 player.vy = players[i].vy;
                 player.alive = players[i].alive;
                 player.skinNumber = players[i].skinNumber;
+                player.playerName = players[i].playerName;
 
                 player.lastR = true; // was the char last facing right?
                 player.start = true; // Have we played the appear animation?
@@ -774,7 +777,8 @@ class Game {
                 vx: this.level.player.obj.velocity.x,
                 vy: this.level.player.obj.velocity.y,
                 alive: this.alive,
-                skinNumber: this.skinNumber
+                skinNumber: this.skinNumber,
+                playerName: this.playerName
                 } 
             },
             time: Date.now(),
