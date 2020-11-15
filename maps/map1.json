@@ -83,9 +83,9 @@
         },
         {
             "name": "end",
-            "src": "End (idle).png",
-            "x": 5,
-            "y": -1,
+            "src": "End (Idle).png",
+            "x": 9,
+            "y": -2,
             "visible": true,
             "boundingBox": [{"x": 0, "y": 0}, {"x": 64, "y": 0}, {"x": 64, "y": 64}, {"x": 0, "y": 64}],
             "actions": {
@@ -97,7 +97,7 @@
         },
         {
             "name": "spike1",
-            "src": "Traps/Spikes/idle.png",
+            "src": "Traps/Spikes/Idle.png",
             "x": 10,
             "y": 8,
             "visible": true,
@@ -111,7 +111,7 @@
         },
         {
             "name": "spike2",
-            "src": "Traps/Spikes/idle.png",
+            "src": "Traps/Spikes/Idle.png",
             "x": 11,
             "y": 8,
             "visible": true,

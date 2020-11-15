@@ -14,6 +14,7 @@ class ConnectionHandler {
         this.gameRunning = false;
         this.roomCode = "";
         this.playerNumber = -1;
+        this.playerName = "";
         this.game = undefined;
         this.id = makeid(6);
         console.log("Your id is: " + this.id);
@@ -86,7 +87,7 @@ class ConnectionHandler {
             this.gameRunning = true;
 
             console.log("Game running, isHost: " + this.isHost);
-            this.game = new Game(this.isHost, this.socket, this.roomCode, this.playerNumber);
+            this.game = new Game(this.isHost, this.socket, this.roomCode, this.playerNumber, this.playerName);
             this.game.start(map);
         }
     }
@@ -125,7 +126,6 @@ conHandler.socket.onmessage = function (event) {
         console.log("Invalid ID: " + data.id);
         return;
     }
-
     if(data.purp == "update"){
         conHandler.game.pull(data);
     } else if (data.purp == "createroom") {
@@ -170,12 +170,21 @@ conHandler.socket.onerror = function (error) {
 };
 
 $(document).ready(function () {
+    $('#namePage').show();
 
-    $('#homePage').show();
+    $('#homePage').hide();
     $('#gamePage').hide();
     $('#helpScreen').hide();
     $('#createGamePage').hide();
     $('#waitingRoom').hide();
+
+    $('#submitNameButton').click(function () {
+        conHandler.playerName = $('#nameInput').val();
+        if (conHandler.playerName.length > 0) {
+            $('#namePage').hide();
+            $('#homePage').show();
+        }
+    });
 
     $('#joinGameButton').click(function () {
         conHandler.roomCode = $('#codeInput').val().toLowerCase();
