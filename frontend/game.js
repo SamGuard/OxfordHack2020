@@ -16,7 +16,14 @@ class Game {
 
     // Function to start the game
     async start() {
-
+		this.endImageR = 0;//there are 12 images
+		this.endImageL = 0;
+		this.endImageIR = 0;
+		this.endImageIL = 0;
+		this.lastR = true;
+		this.start = true;
+		this.appear = 0;
+		
         // Start the game tick loop
         this.gameUpdateInterval = setInterval(function () {
             conHandler.game.update();
@@ -33,6 +40,16 @@ class Game {
         // TODO: Change this to a tile set and add character animation
         this.charImage = new Image();
         this.charImage.src = "assets/mydude.png";
+		this.charRunRight = new Image();
+		this.charRunRight.src = "assets/Run (32x32).png";
+		this.charRunLeft = new Image();
+		this.charRunLeft.src = "assets/runLeft.png";
+		this.charIdelRight = new Image();
+		this.charIdelRight.src = "assets/Idle (32x32).png";
+		this.charIdelLeft = new Image();
+		this.charIdelLeft.src = "assets/idelLeft.png";
+		this.charAppear = new Image();
+		this.charAppear.src = "assets/Appearing (96x96).png";
 
         var map = this.level.response.map;
 
@@ -133,7 +150,43 @@ class Game {
     // Renders the player icon
     showChar() {
         var player = this.level.response.player.obj;
-        this.ctx.drawImage(this.charImage, player.position.x-7, player.position.y-8);
+		if(this.start){
+			conHandler.game.ctx.drawImage(conHandler.game.charAppear,96*Math.floor(this.appear/3),0,96,96,player.position.x-39,player.position.y-40, 96, 96);
+			if(this.appear == 18){
+				this.start = false;
+			}
+			this.appear++;
+		}else{
+			if(this.keys[RIGHT_KEY]){
+				this.endImageR++;
+				this.lastR = true;
+				conHandler.game.ctx.drawImage(conHandler.game.charRunRight,32*Math.floor(this.endImageR/2),0,32,32,player.position.x-7, player.position.y-8, 32, 32);
+				if(this.endImageR == 22){
+					this.endImageR = 0;
+				}
+			}else if(conHandler.game.keys[LEFT_KEY]) {
+				this.endImageL++;
+				this.lastR = false;
+				conHandler.game.ctx.drawImage(conHandler.game.charRunLeft,32*Math.floor(this.endImageL/2),0,32,32,player.position.x-7, player.position.y-8, 32, 32);
+				if(this.endImageL == 22){
+					this.endImageL = 0;
+				}
+			}else{
+				if(this.lastR){
+					this.endImageIR++;
+					conHandler.game.ctx.drawImage(conHandler.game.charIdelRight,32*Math.floor(this.endImageIR/2),0,32,32,player.position.x-7, player.position.y-8, 32, 32);
+					if(this.endImageIR == 20){
+						this.endImageIR = 0;
+					}
+				}else{
+					this.endImageIL++;
+					conHandler.game.ctx.drawImage(conHandler.game.charIdelLeft,32*Math.floor(this.endImageIL/2),0,32,32,player.position.x-7, player.position.y-8, 32, 32);
+					if(this.endImageIL == 20){
+						this.endImageIL = 0;
+					}
+				}
+			}
+		}
     }
 
     // Renders the tiles
