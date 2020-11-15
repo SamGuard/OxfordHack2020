@@ -124,7 +124,7 @@ class Game {
         this.engine = Matter.Engine.create(
        );
         this.world = this.engine.world;
-        this.world.gravity.y = 0.6;
+        this.world.gravity.y = 0.4;
 
         // Add rectangles to contain world
 
@@ -413,40 +413,64 @@ class Game {
     // Player physics update
     updatePlayerPhysics() {
 
-        const JUMP_SPEED = 5;
-        const LEFT_RIGHT_SPEED = 2.5;
-        const DROP_FORCE = 5;
+        if(this.alive) {
 
-        var player = this.level.player.obj;
+            const JUMP_SPEED = 5;
+            const LEFT_RIGHT_SPEED = 2.5;
+            const DROP_FORCE = 5;
 
-        if (this.isOnFloor()) {
-            var velocity = { x: player.velocity.x, y: player.velocity.y }
+            var player = this.level.player.obj;
+
+            if (this.isOnFloor()) {
+                var velocity = {x: player.velocity.x, y: player.velocity.y}
+
+                if (this.keys[UP_KEY]) {
+                    velocity.y = (velocity.y - JUMP_SPEED) / 2;
+                }
+                if (this.keys[LEFT_KEY] && this.keys[RIGHT_KEY] || (!this.keys[LEFT_KEY] && !this.keys[RIGHT_KEY])) {
+                    velocity.x = velocity.x / 2;
+                } else if (this.keys[RIGHT_KEY]) {
+                    velocity.x = (velocity.x + LEFT_RIGHT_SPEED) / 2;
+                } else if (this.keys[LEFT_KEY]) {
+                    velocity.x = (velocity.x - LEFT_RIGHT_SPEED) / 2;
+                }
+                Matter.Body.setVelocity(player, velocity);
+                player.force = {x: 0, y: player.force.y};
+            } else {
+                var velocity = player.velocity;
+                if (this.keys[LEFT_KEY] && this.keys[RIGHT_KEY]) {
+                    velocity.x = velocity.x / 2;
+                } else if (this.keys[RIGHT_KEY]) {
+                    velocity.x = (velocity.x * 2 + LEFT_RIGHT_SPEED) / 3;
+                } else if (this.keys[LEFT_KEY]) {
+                    velocity.x = (velocity.x * 2 - LEFT_RIGHT_SPEED) / 3;
+                }
+                if (this.keys[DOWN_KEY]) {
+                    velocity.y = Math.max(velocity.y, (velocity.y + DROP_FORCE) / 2);
+                }
+                Matter.Body.setVelocity(player, velocity)
+            }
+        } else {
+            const GHOST_SPEED = 1;
+            let playerOb =  this.level.player.obj;
+            playerOb.collisionFilter.category = 0;
+            var velocity = {x: 0, y: 0};
 
             if (this.keys[UP_KEY]) {
-                velocity.y = (velocity.y - JUMP_SPEED) / 2;
-            }
-            if(this.keys[LEFT_KEY] && this.keys[RIGHT_KEY] || (!this.keys[LEFT_KEY] && !this.keys[RIGHT_KEY])) {
-                velocity.x = velocity.x / 2;
-            } else if (this.keys[RIGHT_KEY]) {
-                velocity.x = (velocity.x + LEFT_RIGHT_SPEED) / 2;
-            } else if (this.keys[LEFT_KEY]) {
-                velocity.x = (velocity.x - LEFT_RIGHT_SPEED) / 2;
-            }
-            Matter.Body.setVelocity(player, velocity);
-            player.force = {x: 0, y: player.force.y};
-        } else {
-            var velocity = player.velocity;
-            if (this.keys[LEFT_KEY] && this.keys[RIGHT_KEY]) {
-                velocity.x = velocity.x / 2;
-            } else if (this.keys[RIGHT_KEY]) {
-                velocity.x = (velocity.x * 2 + LEFT_RIGHT_SPEED) / 3;
-            } else if (this.keys[LEFT_KEY]) {
-                velocity.x = (velocity.x * 2 - LEFT_RIGHT_SPEED) / 3;
+                velocity.y -= GHOST_SPEED;
             }
             if (this.keys[DOWN_KEY]) {
-                velocity.y = Math.max(velocity.y, (velocity.y + DROP_FORCE) / 2);
+                velocity.y += GHOST_SPEED;
             }
-            Matter.Body.setVelocity(player, velocity)
+            if (this.keys[LEFT_KEY]) {
+                velocity.x -= GHOST_SPEED;
+            }
+            if (this.keys[RIGHT_KEY]) {
+                velocity.x += GHOST_SPEED;
+            }
+            Matter.Body.setVelocity(playerOb, velocity);
+            playerOb.force = {x:0, y:-0.04};
+
         }
     }
 
@@ -480,7 +504,7 @@ class Game {
             return false;
         }
 
-        if( x1 < 0 || x >= map.width || y1 < 0 || y >= map.height || x === NaN || y === NaN || x1 === NaN || x === NaN) {
+        if( x1 < 0 || x >= map.width || y1 < 0 || y >= map.height || isNaN(x) || isNaN(y) || isNaN(x1) || isNaN(x)) {
             return false;
         }
         if(map.structure[y][x] === -1 && map.structure[y1][x] === -1 && map.structure[y][x1] === -1 && map.structure[y1][x1] === -1) {
